@@ -31,7 +31,7 @@ jQuery(document).ready(function ($) {
         window.history.replaceState({}, '', currentUrl); // Update the URL
 
         // Send the AJAX request
-        $.post(ajax_object.ajax_url, formData + '&action=company_name_checker', function (response) {
+        $.post(ncuk_ajax.ajax_url, formData + '&action=company_name_checker', function (response) {
             $('#responseContainer').html(response); // Display the response in the container
         });
     });
