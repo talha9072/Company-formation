@@ -1,0 +1,180 @@
+
+        /* ===== Wrapper ===== */
+        .company-formation-wrapper {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 40px;
+            margin-top: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            font-family: "Segoe UI", Roboto, sans-serif;
+        }
+
+        /* ===== Main Tab Header ===== */
+        .main-tab-header {
+            text-align: left;
+            border-bottom: 3px solid #4A3B8F;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .main-tab-title {
+            color: #4A3B8F;
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .main-tab-subtitle {
+            color: #555;
+            font-size: 15px;
+            margin-top: 6px;
+        }
+
+        /* ===== Sub Tabs ===== */
+        .sub-tabs {
+            display: flex;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            list-style: none;
+            background: #f5f3ff;
+            padding: 10px 20px !important;
+            border-radius: 50px;
+            border: 1px solid #ddd;
+        }
+
+        .sub-tabs li {
+            cursor: pointer;
+            font-weight: 600;
+            color: #4A3B8F;
+            padding: 10px 22px;
+            border-radius: 30px;
+            margin-right: 10px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .sub-tabs li:hover {
+            background: #E7E2FF;
+        }
+
+        .sub-tabs li.active {
+            background: #4A3B8F;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(74,59,143,0.3);
+        }
+
+        /* ===== Step Content ===== */
+        #step-content {
+            padding-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .company-formation-wrapper { padding: 25px; }
+            .main-tab-title { font-size: 22px; }
+            .sub-tabs { flex-direction: column; }
+            .sub-tabs li { margin-bottom: 8px; }
+        }
+  
+
+        /*--------------------------------------------------------------
+# Step Form Styling
+--------------------------------------------------------------*/
+#step-form {
+  margin-top: 25px;
+}
+
+/* Wrap the step form content in a visible container */
+.step-form-wrapper {
+  border: 1px solid #C7C7C7;
+  padding: 15px;          /* Equal padding on all sides */
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+/* Optional hover effect for a cleaner UX */
+.step-form-wrapper:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Form field spacing */
+.step-form-wrapper .form-group {
+  margin-bottom: 20px;
+}
+
+.step-form-wrapper label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.step-form-wrapper input,
+.step-form-wrapper select,
+.step-form-wrapper textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  transition: border-color 0.2s ease;
+}
+
+.step-form-wrapper input:focus,
+.step-form-wrapper select:focus,
+.step-form-wrapper textarea:focus {
+  border-color: #4a3b8f;
+  outline: none;
+}
+
+.step-form-wrapper button {
+  background-color: #4a3b8f;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.step-form-wrapper button:hover {
+  background-color: #372d74;
+}
+
+
+/*--------------------------------------------------------------
+# Step 1 (Particulars) Form Layout
+--------------------------------------------------------------*/
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.step-form-wrapper .form-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #222;
+}
+
+.step-form-wrapper .info-icon {
+  font-size: 14px;
+  cursor: pointer;
+  color: #4a3b8f;
+  margin-left: 5px;
+}
+
+.step-form-wrapper .form-footer {
+  text-align: right;
+  margin-top: 25px;
+}
+
+#selected_sic_codes {
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 5px;
+  min-height: 42px;
+}
