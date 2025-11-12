@@ -1,3 +1,18 @@
+<?php
+if (!defined('ABSPATH')) exit;
+
+wp_enqueue_script(
+  'form-step1-js',
+  NCUK_URL . 'assets/js/form-step1.js',
+  ['jquery'],
+  filemtime(NCUK_PATH . 'assets/js/form-step1.js'),
+  true
+);
+
+wp_localize_script('form-step1-js', 'form1Data', [
+  'jsonUrl' => esc_url(NCUK_URL . 'includes/forms/form-include/sic-data.json'),
+]);
+?>
 <div class="step-form-wrapper">
 
   <form id="step1form">
