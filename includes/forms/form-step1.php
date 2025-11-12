@@ -1,5 +1,4 @@
 <div class="step-form-wrapper">
-  <h3 class="form-title">Particulars</h3>
 
   <form id="step1form">
     <div class="step-grid" style="display:flex;flex-wrap:wrap;gap:20px;">
@@ -35,13 +34,30 @@
           <span class="info-icon" title="Select your primary business activity.">ℹ️</span>
         </label>
         <select id="business_activity" name="business_activity" style="width:100%;padding:8px;border:1px solid #ccc;">
-          <option value="">Select a category:</option>
-          <option value="Manufacturing">C: Manufacturing</option>
-          <option value="Technology">Technology</option>
-          <option value="Retail">Retail</option>
-          <option value="Finance">Finance</option>
-          <option value="Construction">Construction</option>
-        </select>
+  <option value="">Select a category:</option>
+  <option value="All">All</option>
+  <option value="A">A: Agriculture, Forestry and Fishing</option>
+  <option value="B">B: Mining and Quarrying</option>
+  <option value="C">C: Manufacturing</option>
+  <option value="D">D: Electricity, gas, steam and air conditioning supply</option>
+  <option value="E">E: Water supply, sewerage, waste management and remediation activities</option>
+  <option value="F">F: Construction</option>
+  <option value="G">G: Wholesale and retail trade; repair of motor vehicles and motorcycles</option>
+  <option value="H">H: Transportation and storage</option>
+  <option value="I">I: Accommodation and food service activities</option>
+  <option value="J">J: Information and communication</option>
+  <option value="K">K: Financial and insurance activities</option>
+  <option value="L">L: Real estate activities</option>
+  <option value="M">M: Professional, scientific and technical activities</option>
+  <option value="N">N: Administrative and support service activities</option>
+  <option value="O">O: Public administration and defence; compulsory social security</option>
+  <option value="P">P: Education</option>
+  <option value="Q">Q: Human health and social work activities</option>
+  <option value="R">R: Arts, entertainment and recreation</option>
+  <option value="S">S: Other service activities</option>
+  <option value="T">T: Activities of households as employers; undifferentiated goods and services producing activities of households for own use</option>
+  <option value="U">U: Activities of extraterritorial organisations and bodies</option>
+</select>
 
         <!-- SIC Codes dropdown -->
         <div id="sic-category-container"
@@ -78,43 +94,22 @@ document.addEventListener("DOMContentLoaded", function () {
   const sicContainer = document.getElementById("sic-category-container");
   const selectedContainer = document.getElementById("selected_sic_codes");
 
-  const sicData = {
-    "Manufacturing": {
-      "10110": "Processing and preserving of meat",
-      "10120": "Processing and preserving of poultry meat",
-      "10130": "Production of meat and poultry meat products",
-      "10200": "Processing and preserving of fish, crustaceans and molluscs",
-      "10310": "Processing and preserving of potatoes",
-      "10320": "Manufacture of fruit and vegetable juice",
-      "10390": "Other processing and preserving of fruit and vegetables"
-    },
-    "Technology": {
-      "62010": "Computer programming activities",
-      "62020": "Computer consultancy activities",
-      "62030": "Computer facilities management activities",
-      "63110": "Data processing and hosting activities"
-    },
-    "Retail": {
-      "47110": "Retail sale in non-specialised stores",
-      "47210": "Retail sale of food in specialised stores",
-      "47410": "Retail sale of computers and software"
-    },
-    "Finance": {
-      "64110": "Central banking",
-      "64205": "Holding companies",
-      "64999": "Financial intermediation n.e.c."
-    },
-    "Construction": {
-      "41201": "Construction of commercial buildings",
-      "41202": "Construction of domestic buildings",
-      "42990": "Civil engineering projects n.e.c.",
-      "43999": "Other construction activities n.e.c."
-    }
-  };
-
+  const MAX_SIC_CODES = 4;
+  let sicData = {};
   let selectedCodes = {};
 
-  // Load SIC list when category changes
+  // ✅ Load JSON file dynamically
+  fetch("<?php echo NCUK_URL; ?>includes/forms/form-include/sic-data.json")
+    .then((res) => res.json())
+    .then((data) => {
+      sicData = data;
+    })
+    .catch((err) => {
+      console.error("Failed to load SIC data:", err);
+      sicContainer.innerHTML = "<p style='color:red;'>Error loading SIC data.</p>";
+    });
+
+  // When user selects a business category
   businessSelect.addEventListener("change", function () {
     const category = this.value;
     sicContainer.innerHTML = "";
@@ -125,10 +120,17 @@ document.addEventListener("DOMContentLoaded", function () {
     renderSicList(category);
   });
 
-  // Render SIC list
+  // Render list below dropdown
   function renderSicList(category) {
+    if (!sicData[category]) {
+      sicContainer.style.display = "none";
+      return;
+    }
+
     sicContainer.style.display = "block";
-    const codes = sicData[category];
+    const codes = category === "All"
+  ? Object.assign({}, ...Object.values(sicData)) // merge all categories
+  : sicData[category];
     sicContainer.innerHTML = `
       <div style="padding:10px;">
         <input type="text" class="sic-filter" placeholder="Filter..."
@@ -161,6 +163,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
 
+    // Add SIC codes
     list.addEventListener("click", function (e) {
       if (e.target.classList.contains("add-sic")) {
         const code = e.target.dataset.code;
@@ -168,6 +171,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const cat = e.target.dataset.cat;
 
         if (selectedCodes[code]) return;
+
+        if (Object.keys(selectedCodes).length >= MAX_SIC_CODES) {
+          showTempMessage("⚠️ You can only select up to 4 SIC codes.", selectedContainer);
+          return;
+        }
+
         selectedCodes[code] = { label, cat };
         e.target.disabled = true;
         e.target.style.opacity = "0.5";
@@ -176,7 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Update selected codes
+  // Update selected codes box
   function updateSelectedBox() {
     selectedContainer.innerHTML = "";
     const entries = Object.entries(selectedCodes);
@@ -217,7 +226,22 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Hide list if clicked outside
+  // Temporary inline warning
+  function showTempMessage(msg, container) {
+    const existing = document.querySelector(".sic-warning");
+    if (existing) existing.remove();
+
+    const note = document.createElement("div");
+    note.className = "sic-warning";
+    note.textContent = msg;
+    note.style.cssText =
+      "margin-top:8px;color:#e67e22;font-weight:500;font-size:14px;";
+    container.insertAdjacentElement("afterend", note);
+
+    setTimeout(() => note.remove(), 3000);
+  }
+
+  // Hide dropdown when clicking outside
   document.addEventListener("click", function (e) {
     if (!businessSelect.contains(e.target) && !sicContainer.contains(e.target)) {
       sicContainer.style.display = "none";
@@ -225,3 +249,4 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 </script>
+
