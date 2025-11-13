@@ -1,5 +1,24 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+    initStep1(); // run first time
+
+    // 🔥 RUN AGAIN whenever step-1 HTML is reloaded
+    document.addEventListener("step1Loaded", function () {
+        initStep1();
+    });
+
+});
+
+/* ---------------------------------------------------------
+   MAIN INITIALIZER — RUNS EVERY TIME STEP 1 IS LOADED
+--------------------------------------------------------- */
+function initStep1() {
+
+    // Check elements exist (safe guard for step2/3/4)
+    if (!document.getElementById("business_activity")) return;
+
+    console.log("Step-1 Initialised");
+
     // ELEMENTS
     const businessSelect = document.getElementById("business_activity");
     const sicContainer = document.getElementById("sic-category-container");
@@ -15,7 +34,6 @@ document.addEventListener("DOMContentLoaded", function () {
     let selectedCodes = {};
     let nameAvailable = false;
 
-    // LOCAL STORAGE KEY
     const LS_KEY = "companyformation_step1";
 
     disableSave();
@@ -33,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* -----------------------------------------------------
-       VALIDATION CONTROLLER
+       VALIDATION
     ----------------------------------------------------- */
     function validateStep1() {
         const okSic = Object.keys(selectedCodes).length > 0;
@@ -48,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* -----------------------------------------------------
-       LISTEN TO NAME CHECK RESULT
+       NAME CHECK EVENT LISTENER
     ----------------------------------------------------- */
     document.addEventListener("companyNameChecked", function (e) {
         nameAvailable = e.detail.available === true;
@@ -56,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     /* -----------------------------------------------------
-       LOAD SIC JSON THEN RESTORE LOCAL DATA + DB NAME
+       LOAD SIC → RESTORE LOCAL → RESTORE DB
     ----------------------------------------------------- */
     if (typeof form1Data !== "undefined" && form1Data.jsonUrl) {
         fetch(form1Data.jsonUrl)
@@ -64,17 +82,12 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(data => {
                 sicData = data;
                 restoreLocalStorage();
-                restoreCompanyNameFromDB(); // load DB after SIC ready
-            })
-            .catch(err => {
-                console.error("SIC load error:", err);
-                sicContainer.innerHTML =
-                    "<p style='color:red;'>Error loading SIC data.</p>";
+                restoreCompanyNameFromDB();
             });
     }
 
     /* -----------------------------------------------------
-       RESTORE LOCAL STORAGE
+       RESTORE LOCAL
     ----------------------------------------------------- */
     function restoreLocalStorage() {
         const saved = localStorage.getItem(LS_KEY);
@@ -84,7 +97,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (data.company_type) companyType.value = data.company_type;
         if (data.jurisdiction) jurisdiction.value = data.jurisdiction;
-        if (data.business_activity) businessSelect.value = data.business_activity;
+        if (data.business_activity) {
+            businessSelect.value = data.business_activity;
+            renderSicList(data.business_activity);
+        }
 
         if (data.sic_codes) {
             selectedCodes = data.sic_codes;
@@ -95,10 +111,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* -----------------------------------------------------
-       RESTORE COMPANY NAME FROM DB → AUTO RUN CHECKER
+       RESTORE COMPANY NAME FROM DB
     ----------------------------------------------------- */
     function restoreCompanyNameFromDB() {
+
         jQuery.post(ncuk_ajax.ajax_url, { action: "ncuk_load_step1" }, function (res) {
+
             if (!res.success || !res.data) return;
 
             const data = res.data;
@@ -109,7 +127,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Auto-run name checker
                 jQuery.post(
                     ncuk_ajax.ajax_url,
-                    { action: "company_name_checker", search: data.company_name },
+                    {
+                        action: "company_name_checker",
+                        search: data.company_name,
+                    },
                     function (response) {
 
                         if (response?.data?.html) {
@@ -128,14 +149,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* -----------------------------------------------------
-       SAVE TO LOCAL STORAGE
+       SAVE TO LOCAL
     ----------------------------------------------------- */
     function saveToLocal() {
         const payload = {
             company_type: companyType.value,
             jurisdiction: jurisdiction.value,
             business_activity: businessSelect.value,
-            sic_codes: selectedCodes
+            sic_codes: selectedCodes,
         };
         localStorage.setItem(LS_KEY, JSON.stringify(payload));
     }
@@ -159,6 +180,7 @@ document.addEventListener("DOMContentLoaded", function () {
        RENDER SIC LIST
     ----------------------------------------------------- */
     function renderSicList(category) {
+
         if (!sicData[category] && category !== "All") {
             sicContainer.style.display = "none";
             return;
@@ -181,24 +203,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const list = sicContainer.querySelector(".sic-list");
 
-        for (const [code, desc] of Object.entries(codes)) {
+        Object.entries(codes).forEach(([code, desc]) => {
             const div = document.createElement("div");
             div.className = "sic-item";
             div.style.cssText =
                 "display:flex;justify-content:space-between;align-items:center;padding:6px 4px;border-bottom:1px solid #eee;";
+
             div.innerHTML = `
                 <span>${code} - ${desc}</span>
                 <button type="button" class="add-sic" data-cat="${category}" data-code="${code}" data-label="${desc}"
                     style="background:#4CAF50;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;">+</button>
             `;
+
             list.appendChild(div);
 
+            // disable SIG if loaded already
             if (selectedCodes[code]) {
                 const btn = div.querySelector(".add-sic");
                 btn.disabled = true;
                 btn.style.opacity = "0.5";
             }
-        }
+        });
 
         // Filter
         sicContainer.querySelector(".sic-filter").addEventListener("input", function () {
@@ -217,11 +242,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const code = e.target.dataset.code;
             const label = e.target.dataset.label;
             const cat = e.target.dataset.cat;
-
-            if (Object.keys(selectedCodes).length >= MAX_SIC_CODES) {
-                showTempMessage("⚠️ You can only select up to 4 SIC codes.", selectedContainer);
-                return;
-            }
 
             selectedCodes[code] = { label, cat };
             saveToLocal();
@@ -247,18 +267,20 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        for (const [code, obj] of entries) {
+        entries.forEach(([code, obj]) => {
             const div = document.createElement("div");
             div.className = "selected-item";
             div.style.cssText =
                 "display:flex;justify-content:space-between;align-items:center;background:#dff0d8;margin:4px 0;padding:6px 10px;border-radius:4px;";
+
             div.innerHTML = `
                 <span>${code} - ${obj.label}</span>
                 <button type="button" class="remove-sic" data-code="${code}"
                     style="background:#e74c3c;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;">×</button>
             `;
+
             selectedContainer.appendChild(div);
-        }
+        });
 
         selectedContainer.querySelectorAll(".remove-sic").forEach(btn => {
             btn.addEventListener("click", function () {
@@ -283,23 +305,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /* -----------------------------------------------------
-       TEMP WARNING MESSAGE
-    ----------------------------------------------------- */
-    function showTempMessage(msg, container) {
-        const note = document.createElement("div");
-        note.className = "sic-warning";
-        note.textContent = msg;
-        note.style.cssText =
-            "margin-top:8px;color:#e67e22;font-weight:500;font-size:14px;";
-        container.insertAdjacentElement("afterend", note);
-        setTimeout(() => note.remove(), 3000);
-    }
-
-    /* -----------------------------------------------------
-       SAVE BUTTON → SAVE DB → UNLOCK STEP 2
+       SAVE BUTTON
     ----------------------------------------------------- */
     saveButton.addEventListener("click", function () {
-        if (saveButton.disabled) return;
 
         const payload = {
             action: "ncuk_save_step1",
@@ -307,19 +315,17 @@ document.addEventListener("DOMContentLoaded", function () {
             company_type: companyType.value,
             jurisdiction: jurisdiction.value,
             business_activity: businessSelect.value,
-            sic_codes: selectedCodes
+            sic_codes: selectedCodes,
         };
 
         jQuery.post(ncuk_ajax.ajax_url, payload, function (res) {
 
-            if (res.success) {
-                saveToLocal();
+            saveToLocal();
 
-                const step2 = document.querySelector('.sub-tabs li[data-step="2"]');
-                step2.classList.remove("disabled");
-                step2.click();
-            }
+            const step2 = document.querySelector('.sub-tabs li[data-step="2"]');
+            step2.classList.remove("disabled");
+            step2.click();
         });
     });
 
-});
+}

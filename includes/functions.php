@@ -335,16 +335,32 @@ add_shortcode('company_formation_wizard', 'ncuk_wrapper_shortcode');
 
 
 /*--------------------------------------------------------------
-# 7. AJAX Loader for Step Forms
+# 7. AJAX Loader for Step Forms (FIXED)
 --------------------------------------------------------------*/
 add_action('wp_ajax_load_step_form', 'ncuk_load_step_form');
 add_action('wp_ajax_nopriv_load_step_form', 'ncuk_load_step_form');
 
 function ncuk_load_step_form() {
+
     $step = isset($_POST['step']) ? intval($_POST['step']) : 1;
+
+    ob_start();
+
+    // Load the correct step form
     ncuk_render_step_form($step);
+
+    // 🔥 THE IMPORTANT FIX:
+    // When Step 1 reloads, we must tell the JS to re-initialize Step-1 logic again.
+    if ($step == 1) {
+        echo '<script>document.dispatchEvent(new Event("step1Loaded"));</script>';
+    }
+
+    $html = ob_get_clean();
+    echo $html;
+
     wp_die();
 }
+
 
 /*--------------------------------------------------------------
 # 8. Step Form Renderer (includes external files)
