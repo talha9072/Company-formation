@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    initStep1(); // run first time
+    initStep1(); // first time
 
-    // 🔥 RUN AGAIN whenever step-1 HTML is reloaded
+    // When step1 HTML reloads via AJAX
     document.addEventListener("step1Loaded", function () {
         initStep1();
     });
@@ -10,11 +10,10 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* ---------------------------------------------------------
-   MAIN INITIALIZER — RUNS EVERY TIME STEP 1 IS LOADED
+   MAIN INITIALIZER
 --------------------------------------------------------- */
 function initStep1() {
 
-    // Check elements exist (safe guard for step2/3/4)
     if (!document.getElementById("business_activity")) return;
 
     console.log("Step-1 Initialised");
@@ -66,7 +65,7 @@ function initStep1() {
     }
 
     /* -----------------------------------------------------
-       NAME CHECK EVENT LISTENER
+       NAME CHECK EVENT HANDLER
     ----------------------------------------------------- */
     document.addEventListener("companyNameChecked", function (e) {
         nameAvailable = e.detail.available === true;
@@ -74,20 +73,21 @@ function initStep1() {
     });
 
     /* -----------------------------------------------------
-       LOAD SIC → RESTORE LOCAL → RESTORE DB
+       LOAD SIC JSON → RESTORE LOCAL → RESTORE DB
     ----------------------------------------------------- */
     if (typeof form1Data !== "undefined" && form1Data.jsonUrl) {
         fetch(form1Data.jsonUrl)
             .then(res => res.json())
             .then(data => {
                 sicData = data;
+
                 restoreLocalStorage();
                 restoreCompanyNameFromDB();
             });
     }
 
     /* -----------------------------------------------------
-       RESTORE LOCAL
+       RESTORE LOCAL STORAGE
     ----------------------------------------------------- */
     function restoreLocalStorage() {
         const saved = localStorage.getItem(LS_KEY);
@@ -95,8 +95,30 @@ function initStep1() {
 
         const data = JSON.parse(saved);
 
+        /* Restore Company Name & Auto-run Checker */
+        if (data.company_name) {
+            companyNameInput.value = data.company_name;
+
+            jQuery.post(ncuk_ajax.ajax_url, {
+                action: "company_name_checker",
+                search: data.company_name
+            }, function (response) {
+
+                if (response?.data?.html) {
+                    jQuery("#responseContainer").html(response.data.html);
+
+                    document.dispatchEvent(
+                        new CustomEvent("companyNameChecked", {
+                            detail: { available: response.data.available }
+                        })
+                    );
+                }
+            });
+        }
+
         if (data.company_type) companyType.value = data.company_type;
         if (data.jurisdiction) jurisdiction.value = data.jurisdiction;
+
         if (data.business_activity) {
             businessSelect.value = data.business_activity;
             renderSicList(data.business_activity);
@@ -124,13 +146,9 @@ function initStep1() {
             if (data.company_name) {
                 companyNameInput.value = data.company_name;
 
-                // Auto-run name checker
                 jQuery.post(
                     ncuk_ajax.ajax_url,
-                    {
-                        action: "company_name_checker",
-                        search: data.company_name,
-                    },
+                    { action: "company_name_checker", search: data.company_name },
                     function (response) {
 
                         if (response?.data?.html) {
@@ -149,14 +167,15 @@ function initStep1() {
     }
 
     /* -----------------------------------------------------
-       SAVE TO LOCAL
+       SAVE TO LOCALSTORAGE
     ----------------------------------------------------- */
     function saveToLocal() {
         const payload = {
+            company_name: companyNameInput.value.trim(),
             company_type: companyType.value,
             jurisdiction: jurisdiction.value,
             business_activity: businessSelect.value,
-            sic_codes: selectedCodes,
+            sic_codes: selectedCodes
         };
         localStorage.setItem(LS_KEY, JSON.stringify(payload));
     }
@@ -217,7 +236,6 @@ function initStep1() {
 
             list.appendChild(div);
 
-            // disable SIG if loaded already
             if (selectedCodes[code]) {
                 const btn = div.querySelector(".add-sic");
                 btn.disabled = true;
@@ -235,7 +253,7 @@ function initStep1() {
             });
         });
 
-        // Add SIC
+        // + buttons
         list.addEventListener("click", function (e) {
             if (!e.target.classList.contains("add-sic")) return;
 
@@ -252,6 +270,9 @@ function initStep1() {
             updateSelectedBox();
             validateStep1();
         });
+
+        // 💥 IMPORTANT FIX — Ensure selected SIC restored
+        updateSelectedBox();
     }
 
     /* -----------------------------------------------------
@@ -305,7 +326,7 @@ function initStep1() {
     }
 
     /* -----------------------------------------------------
-       SAVE BUTTON
+       SAVE BUTTON → DB SAVE → GO TO STEP 2
     ----------------------------------------------------- */
     saveButton.addEventListener("click", function () {
 
@@ -315,7 +336,7 @@ function initStep1() {
             company_type: companyType.value,
             jurisdiction: jurisdiction.value,
             business_activity: businessSelect.value,
-            sic_codes: selectedCodes,
+            sic_codes: selectedCodes
         };
 
         jQuery.post(ncuk_ajax.ajax_url, payload, function (res) {
