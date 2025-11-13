@@ -46,6 +46,7 @@ add_action('wp_enqueue_scripts', function () {
         filemtime(NCUK_PATH . 'assets/css/index.css') // cache-busting on changes
     );
 });
+require_once NCUK_PATH . 'includes/wizard-step1-storage.php';
 
 /*--------------------------------------------------------------
 # 3. AJAX Handler: Company Name Check
@@ -167,9 +168,75 @@ function ncuk_wrapper_shortcode() {
     ob_start(); ?>
     
     <style>
-        .sub-tabs li.disabled {
-            pointer-events: none;
+        .sub-tabs {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            padding: 12px 20px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            user-select: none;
+            text-align: center;
+        }
+
+        .step-item .step-circle {
+            width: 32px;
+            height: 32px;
+            background: #ccc;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .step-item .step-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Active Step */
+        .step-item.active {
+            border-color: #4a3b8f;
+        }
+        .step-item.active .step-circle {
+            background: #E67000;
+        }
+
+        /* Completed Step */
+        .step-item.completed {
+            border-color: #28a745;
+        }
+        .step-item.completed .step-circle {
+            background: #28a745 !important;
+            position: relative;
+            color: transparent;
+        }
+        .step-item.completed .step-circle::before {
+            content: "✔";
+            color: #fff;
+            font-size: 17px;
+            font-weight: bold;
+            position: absolute;
+        }
+
+        /* Disabled Step */
+        .step-item.disabled {
             opacity: 0.4;
+            pointer-events: none;
         }
     </style>
 
@@ -182,14 +249,28 @@ function ncuk_wrapper_shortcode() {
 
         <!-- Tabs -->
         <ul class="sub-tabs">
-            <li class="active" data-step="1">1. Particulars</li>
-            <li class="disabled" data-step="2">2. Addresses</li>
-            <li class="disabled" data-step="3">3. Appointments</li>
-            <li class="disabled" data-step="4">4. Documents</li>
+            <li class="step-item active" data-step="1">
+                <span class="step-circle">1</span>
+                <span class="step-label">Particulars</span>
+            </li>
+
+            <li class="step-item disabled" data-step="2">
+                <span class="step-circle">2</span>
+                <span class="step-label">Addresses</span>
+            </li>
+
+            <li class="step-item disabled" data-step="3">
+                <span class="step-circle">3</span>
+                <span class="step-label">Appointments</span>
+            </li>
+
+            <li class="step-item disabled" data-step="4">
+                <span class="step-circle">4</span>
+                <span class="step-label">Documents</span>
+            </li>
         </ul>
 
         <div id="step-content">
-            <!-- Step 1 name checker only -->
             <div id="step1-name-checker">
                 <?php echo do_shortcode('[company_name_checker]'); ?>
             </div>
@@ -203,31 +284,44 @@ function ncuk_wrapper_shortcode() {
 <script>
 jQuery(document).ready(function($){
 
-    // Prevent clicking disabled steps
-    $('.sub-tabs li').on('click', function(e){
-        if($(this).hasClass('disabled')){
+    $(".step-item").on("click", function(e){
+
+        if($(this).hasClass("disabled")){
             e.preventDefault();
             return false;
         }
 
-        const step = $(this).data('step');
+        const step = $(this).data("step");
 
-        $('.sub-tabs li').removeClass('active');
-        $(this).addClass('active');
+        // Remove all active states
+        $(".step-item").removeClass("active");
 
-        $.post(ncuk_ajax.ajax_url, {
-            action: 'load_step_form',
-            step: step
-        }, function(response){
-            $('#step-form').html(response);
-
-            // Hide name checker on step > 1
-            if(step > 1){
-                $('#step1-name-checker').hide();
-            } else {
-                $('#step1-name-checker').show();
+        // Mark previous steps as completed
+        $(".step-item").each(function(){
+            const thisStep = $(this).data("step");
+            if(thisStep < step){
+                $(this).addClass("completed");
             }
         });
+
+        // Activate clicked step
+        $(this).addClass("active");
+
+        // Load step content
+        $.post(ncuk_ajax.ajax_url, {
+            action: "load_step_form",
+            step: step
+        }, function(response){
+
+            $("#step-form").html(response);
+
+            if(step > 1){
+                $("#step1-name-checker").hide();
+            } else {
+                $("#step1-name-checker").show();
+            }
+        });
+
     });
 
 });
@@ -237,6 +331,7 @@ jQuery(document).ready(function($){
     return ob_get_clean();
 }
 add_shortcode('company_formation_wizard', 'ncuk_wrapper_shortcode');
+
 
 
 /*--------------------------------------------------------------
@@ -285,25 +380,4 @@ function ncuk_render_step_form($step) {
     } else {
         echo '<p>Form file not found for step ' . intval($step) . '.</p>';
     }
-}
-/*--------------------------------------------------------------
-# NEW — Save Step 1 Data
---------------------------------------------------------------*/
-add_action('wp_ajax_save_step1', 'ncuk_save_step1');
-add_action('wp_ajax_nopriv_save_step1', 'ncuk_save_step1');
-
-function ncuk_save_step1() {
-
-    if(!session_id()){
-        session_start();
-    }
-
-    $_SESSION['step1'] = [
-        'company_type' => sanitize_text_field($_POST['company_type']),
-        'jurisdiction' => sanitize_text_field($_POST['jurisdiction']),
-        'business_activity' => sanitize_text_field($_POST['business_activity']),
-        'sic_codes' => $_POST['sic_codes'],
-    ];
-
-    wp_send_json_success(['message' => 'Step 1 saved']);
 }
