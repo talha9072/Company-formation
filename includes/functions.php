@@ -55,8 +55,7 @@ function ncuk_ajax_handler() {
     $apiKey = get_option('namecheck_uk_api_key', '');
 
     if (!$search) {
-        echo '<div class="response-box" style="background:#ff4f4f;color:white;padding:20px;border-radius:10px;">Please enter a company name.</div>';
-        wp_die();
+        wp_send_json_error(['html' => '<div class="response-box" style="background:#ff4f4f;color:white;padding:20px;border-radius:10px;">Please enter a company name.</div>']);
     }
 
     // Reserved keyword check
@@ -64,13 +63,16 @@ function ncuk_ajax_handler() {
     $reservedPhraseResponse = function_exists('containsReservedPhrase') ? containsReservedPhrase($search) : false;
 
     if ($reservedResponse || $reservedPhraseResponse) {
-        echo ncuk_build_response('#E67000', 'checklist.png', $search, $reservedResponse ?: $reservedPhraseResponse);
-        wp_die();
+        wp_send_json_success([
+            'available' => false,
+            'html' => ncuk_build_response('#E67000', 'checklist.png', $search, $reservedResponse ?: $reservedPhraseResponse)
+        ]);
     }
 
     if (empty($apiKey)) {
-        echo ncuk_build_response('#ff4f4f', '', 'Error', 'API Key not configured. Add it in the NameCheck settings.');
-        wp_die();
+        wp_send_json_error([
+            'html' => ncuk_build_response('#ff4f4f', '', 'Error', 'API Key not configured.')
+        ]);
     }
 
     // Call Companies House API
@@ -85,28 +87,35 @@ function ncuk_ajax_handler() {
     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($code == 200) {
-        $data = json_decode($response, true);
-        $exists = false;
-        if (!empty($data['items'])) {
-            foreach ($data['items'] as $item) {
-                if (strcasecmp(ncuk_remove_suffixes($item['title']), ncuk_remove_suffixes($search)) === 0) {
-                    $exists = true;
-                    break;
-                }
-            }
-        }
-
-        if ($exists) {
-            echo ncuk_build_response('#ff4f4f', 'remove.png', $search, 'This name is not available for registration.');
-        } else {
-            echo ncuk_build_response('#28a745', 'success-icon.png', $search, 'This name is available for registration!');
-        }
-    } else {
-        echo ncuk_build_response('#ff4f4f', '', 'Error', 'Unable to retrieve results. HTTP Code ' . intval($code));
+    if ($code != 200) {
+        wp_send_json_error([
+            'html' => ncuk_build_response('#ff4f4f', '', 'Error', 'Unable to retrieve results.')
+        ]);
     }
 
-    wp_die();
+    $data = json_decode($response, true);
+    $exists = false;
+
+    if (!empty($data['items'])) {
+        foreach ($data['items'] as $item) {
+            if (strcasecmp(ncuk_remove_suffixes($item['title']), ncuk_remove_suffixes($search)) === 0) {
+                $exists = true;
+                break;
+            }
+        }
+    }
+
+    if ($exists) {
+        wp_send_json_success([
+            'available' => false,
+            'html' => ncuk_build_response('#ff4f4f', 'remove.png', $search, 'This name is not available.')
+        ]);
+    } else {
+        wp_send_json_success([
+            'available' => true,
+            'html' => ncuk_build_response('#28a745', 'success-icon.png', $search, 'This name is available!')
+        ]);
+    }
 }
 add_action('wp_ajax_company_name_checker', 'ncuk_ajax_handler');
 add_action('wp_ajax_nopriv_company_name_checker', 'ncuk_ajax_handler');
@@ -156,25 +165,34 @@ add_shortcode('company_name_checker', 'ncuk_shortcode');
 --------------------------------------------------------------*/
 function ncuk_wrapper_shortcode() {
     ob_start(); ?>
+    
+    <style>
+        .sub-tabs li.disabled {
+            pointer-events: none;
+            opacity: 0.4;
+        }
+    </style>
+
     <div class="company-formation-wrapper">
 
-        <!-- Main Tab Header -->
         <div class="main-tab-header">
             <h2 class="main-tab-title">Company Formation</h2>
             <p class="main-tab-subtitle">Complete your company registration in a few easy steps</p>
         </div>
 
-        <!-- Sub Tabs -->
+        <!-- Tabs -->
         <ul class="sub-tabs">
             <li class="active" data-step="1">1. Particulars</li>
-            <li data-step="2">2. Addresses</li>
-            <li data-step="3">3. Appointments</li>
-            <li data-step="4">4. Documents</li>
+            <li class="disabled" data-step="2">2. Addresses</li>
+            <li class="disabled" data-step="3">3. Appointments</li>
+            <li class="disabled" data-step="4">4. Documents</li>
         </ul>
 
-        <!-- Step Content -->
         <div id="step-content">
-            <?php echo do_shortcode('[company_name_checker]'); ?>
+            <!-- Step 1 name checker only -->
+            <div id="step1-name-checker">
+                <?php echo do_shortcode('[company_name_checker]'); ?>
+            </div>
 
             <div id="step-form">
                 <?php ncuk_render_step_form(1); ?>
@@ -182,21 +200,39 @@ function ncuk_wrapper_shortcode() {
         </div>
     </div>
 
-    
+<script>
+jQuery(document).ready(function($){
 
-    <script>
-    jQuery(document).ready(function ($) {
-        $('.sub-tabs li').on('click', function () {
-            const step = $(this).data('step');
-            $('.sub-tabs li').removeClass('active');
-            $(this).addClass('active');
+    // Prevent clicking disabled steps
+    $('.sub-tabs li').on('click', function(e){
+        if($(this).hasClass('disabled')){
+            e.preventDefault();
+            return false;
+        }
 
-            $.post(ncuk_ajax.ajax_url, { action: 'load_step_form', step: step }, function (response) {
-                $('#step-form').html(response);
-            });
+        const step = $(this).data('step');
+
+        $('.sub-tabs li').removeClass('active');
+        $(this).addClass('active');
+
+        $.post(ncuk_ajax.ajax_url, {
+            action: 'load_step_form',
+            step: step
+        }, function(response){
+            $('#step-form').html(response);
+
+            // Hide name checker on step > 1
+            if(step > 1){
+                $('#step1-name-checker').hide();
+            } else {
+                $('#step1-name-checker').show();
+            }
         });
     });
-    </script>
+
+});
+</script>
+
     <?php
     return ob_get_clean();
 }
@@ -249,4 +285,25 @@ function ncuk_render_step_form($step) {
     } else {
         echo '<p>Form file not found for step ' . intval($step) . '.</p>';
     }
+}
+/*--------------------------------------------------------------
+# NEW — Save Step 1 Data
+--------------------------------------------------------------*/
+add_action('wp_ajax_save_step1', 'ncuk_save_step1');
+add_action('wp_ajax_nopriv_save_step1', 'ncuk_save_step1');
+
+function ncuk_save_step1() {
+
+    if(!session_id()){
+        session_start();
+    }
+
+    $_SESSION['step1'] = [
+        'company_type' => sanitize_text_field($_POST['company_type']),
+        'jurisdiction' => sanitize_text_field($_POST['jurisdiction']),
+        'business_activity' => sanitize_text_field($_POST['business_activity']),
+        'sic_codes' => $_POST['sic_codes'],
+    ];
+
+    wp_send_json_success(['message' => 'Step 1 saved']);
 }

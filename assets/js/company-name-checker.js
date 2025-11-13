@@ -1,40 +1,35 @@
-jQuery(document).ready(function($) {
-    $('#searchForm').submit(function(e) {
-        e.preventDefault(); // Prevent default form submission
-        var searchQuery = $('#search').val(); // Get the search query
-
-        $.ajax({
-            type: "POST",
-            url: ajax_object.ajax_url,
-            data: {
-                action: 'company_name_checker',
-                search: searchQuery
-            },
-            success: function(response) {
-                $('#responseContainer').html(response); // Display the response
-            }
-        });
-    });
-});
-
-
 jQuery(document).ready(function ($) {
-    $('#companyNameCheckerForm').on('submit', function (e) {
-        e.preventDefault(); // Prevent default form submission
 
-        const searchQuery = $('#search').val(); // Get the search input value
-        const formData = $(this).serialize(); // Serialize the form data
+    $("#companyNameCheckerForm").on("submit", function (e) {
+        e.preventDefault();
 
-        // Add the `ukname` parameter to the URL without reloading the page
-        const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.set('ukname', searchQuery); // Set the `ukname` parameter
-        window.history.replaceState({}, '', currentUrl); // Update the URL
+        const search = $("#search").val().trim();
+        if (!search) return;
 
-        // Send the AJAX request
-        $.post(ncuk_ajax.ajax_url, formData + '&action=company_name_checker', function (response) {
-            $('#responseContainer').html(response); // Display the response in the container
+        $.post(ncuk_ajax.ajax_url, {
+            action: "company_name_checker",
+            search: search
+        }, function (response) {
+
+            // ---- THE FIX: HTML is inside response.data.html ----
+            if (response && response.data && response.data.html) {
+                $("#responseContainer").html(response.data.html);
+            } else {
+                $("#responseContainer").html("<p style='color:red;'>Unexpected response.</p>");
+            }
+
+            // Step-1 validation trigger
+            let isAvailable = false;
+
+            if (response.success && response.data && response.data.available === true) {
+                isAvailable = true;
+            }
+
+            document.dispatchEvent(new CustomEvent("companyNameChecked", {
+                detail: { available: isAvailable }
+            }));
         });
+
     });
+
 });
-
-
