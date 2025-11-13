@@ -163,6 +163,18 @@ function initStep1() {
                     }
                 );
             }
+
+            // 🔥 Auto unlock step 2 if DB shows completed data
+            if (
+                data.company_name &&
+                data.company_type &&
+                data.jurisdiction &&
+                data.business_activity
+            ) {
+                const nextStep = document.querySelector('.sub-tabs li[data-step="2"]');
+                if (nextStep) nextStep.classList.remove("disabled");
+            }
+
         });
     }
 
@@ -271,7 +283,7 @@ function initStep1() {
             validateStep1();
         });
 
-        // 💥 IMPORTANT FIX — Ensure selected SIC restored
+        // 💥 INSURE RESTORED SELECTED SIC SHOWS CORRECTLY
         updateSelectedBox();
     }
 
@@ -348,5 +360,26 @@ function initStep1() {
             step2.click();
         });
     });
+
+
+    /* -----------------------------------------------------
+       AUTO-UNLOCK STEP 2 FROM LOCAL STORAGE ALSO
+    ----------------------------------------------------- */
+    (function autoUnlockSteps() {
+        const saved = localStorage.getItem("companyformation_step1");
+        if (!saved) return;
+
+        const d = JSON.parse(saved);
+
+        if (
+            d.company_name &&
+            d.company_type &&
+            d.jurisdiction &&
+            d.business_activity
+        ) {
+            const s2 = document.querySelector('.sub-tabs li[data-step="2"]');
+            if (s2) s2.classList.remove("disabled");
+        }
+    })();
 
 }
