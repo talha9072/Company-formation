@@ -4,100 +4,114 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function initStep1() {
+
   const businessSelect = document.getElementById("business_activity");
   if (!businessSelect) return;
 
-  console.log("✅ Step-1 Initialized");
+  console.log("🔥 Step-1 JS Loaded (DB-only mode)");
 
-  const sicContainer = document.getElementById("sic-category-container");
-  const selectedContainer = document.getElementById("selected_sic_codes");
-  const saveButton = document.getElementById("step1-save");
+  // Elements
+  const companyNameInput = document.querySelector('#step1form input[name="company_name"]');
   const companyType = document.getElementById("company_type");
   const jurisdiction = document.getElementById("jurisdiction");
-  const companyNameInput = document.getElementById("search");
+  const selectedContainer = document.getElementById("selected_sic_codes");
+  const saveButton = document.getElementById("step1-save");
 
-  const MAX_SIC_CODES = 4;
-  let sicData = {};
-  let selectedCodes = {};
-  let nameAvailable = false;
-  const LS_KEY = "companyformation_step1";
-
-  disableSave();
-  function disableSave() { saveButton.disabled = true; saveButton.style.opacity = "0.6"; }
-  function enableSave() { saveButton.disabled = false; saveButton.style.opacity = "1"; }
-
-  function validateStep1() {
-    const okSic = Object.keys(selectedCodes).length > 0;
-    const okType = companyType.value.trim() !== "";
-    const okJur = jurisdiction.value.trim() !== "";
-    if (nameAvailable && okSic && okType && okJur) enableSave();
-    else disableSave();
+  if (!companyNameInput) {
+    console.error("❌ Hidden company_name field missing!");
+    return;
   }
 
-  // Listen for company name check event
+  // State
+  let selectedCodes = window.step1SelectedCodes || {};
+  let nameAvailable = false;
+
+  disableSave();
+  function disableSave() { saveButton.disabled = true; saveButton.style.opacity = "0.5"; }
+  function enableSave() { saveButton.disabled = false; saveButton.style.opacity = "1"; }
+
+  /** ---------------------------------------------------------
+   * VALIDATION LOGIC
+   --------------------------------------------------------- */
+  function validateStep1() {
+
+    const okName = companyNameInput.value.trim() !== "";
+    const okNameAvailable = nameAvailable === true;
+    const okType = companyType.value !== "";
+    const okJur = jurisdiction.value !== "";
+    const okSic = Object.keys(selectedCodes).length > 0;
+
+    if (okName && okNameAvailable && okType && okJur && okSic) {
+      enableSave();
+    } else {
+      disableSave();
+    }
+  }
+
+  /** ---------------------------------------------------------
+   * When NameChecker finishes
+   --------------------------------------------------------- */
   document.addEventListener("companyNameChecked", function (e) {
+
     nameAvailable = e.detail.available === true;
+
+    // If name is NOT available ⇒ clear hidden input
+    if (!nameAvailable) {
+      companyNameInput.value = "";
+    }
+
     validateStep1();
   });
 
-  // Load SIC JSON
-  if (typeof form1Data !== "undefined" && form1Data.jsonUrl) {
-    fetch(form1Data.jsonUrl)
-      .then(res => res.json())
-      .then(data => {
-        sicData = data;
-        restoreLocalStorage();
-        restoreFromDB();
-      });
-  }
+  /** ---------------------------------------------------------
+   * SIC updates
+   --------------------------------------------------------- */
+  window.step1SelectedCodes = selectedCodes;
 
-  function restoreLocalStorage() {
-    const saved = localStorage.getItem(LS_KEY);
-    if (!saved) return;
-    const d = JSON.parse(saved);
-    if (d.company_name) companyNameInput.value = d.company_name;
-    if (d.company_type) companyType.value = d.company_type;
-    if (d.jurisdiction) jurisdiction.value = d.jurisdiction;
-    if (d.business_activity) businessSelect.value = d.business_activity;
-    if (d.sic_codes) selectedCodes = d.sic_codes;
+  document.addEventListener("sicUpdated", function () {
+    selectedCodes = window.step1SelectedCodes;
     updateSelectedBox();
-  }
+    validateStep1();
+  });
+
+  /** ---------------------------------------------------------
+   * RESTORE FROM DB only (NO LOCAL STORAGE)
+   --------------------------------------------------------- */
+  restoreFromDB();
 
   function restoreFromDB() {
-    jQuery.post(ncuk_ajax.ajax_url, { action: "ncuk_load_step1" }, function (res) {
-      if (!res.success || !res.data) return;
-      const data = res.data;
-      if (!data) return;
 
-      // Fill fields
-      if (data.company_name) companyNameInput.value = data.company_name;
-      if (data.company_type) companyType.value = data.company_type;
-      if (data.jurisdiction) jurisdiction.value = data.jurisdiction;
-      if (data.business_activity) businessSelect.value = data.business_activity;
-      if (data.sic_codes) selectedCodes = data.sic_codes;
+    jQuery.post(ncuk_ajax.ajax_url, { action: "ncuk_load_step1" }, function (res) {
+
+      if (!res.success || !res.data) return;
+      const d = res.data;
+
+      if (d.company_name) companyNameInput.value = d.company_name;
+      if (d.company_type) companyType.value = d.company_type;
+      if (d.jurisdiction) jurisdiction.value = d.jurisdiction;
+      if (d.business_activity) businessSelect.value = d.business_activity;
+
+      if (d.sic_codes) {
+        selectedCodes = d.sic_codes;
+        window.step1SelectedCodes = selectedCodes;
+      }
 
       updateSelectedBox();
+      validateStep1();
 
-      // auto unlock step2
-      if (data.company_name && data.company_type && data.jurisdiction && data.business_activity) {
-        document.querySelector('.sub-tabs li[data-step="2"]').classList.remove("disabled");
+      // Unlock Step-2 if DB has old data
+      if (d.company_name && d.company_type && d.jurisdiction && d.business_activity) {
+        const s2 = document.querySelector('.sub-tabs li[data-step="2"]');
+        if (s2) s2.classList.remove("disabled");
       }
     });
   }
 
-  function saveToLocal() {
-    const payload = {
-      company_name: companyNameInput.value.trim(),
-      company_type: companyType.value,
-      jurisdiction: jurisdiction.value,
-      business_activity: businessSelect.value,
-      sic_codes: selectedCodes
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(payload));
-  }
-
-  // --- Save & Continue ---
+  /** ---------------------------------------------------------
+   * SAVE TO DATABASE ONLY
+   --------------------------------------------------------- */
   saveButton.addEventListener("click", function () {
+
     const payload = {
       action: "ncuk_save_step1",
       company_name: companyNameInput.value.trim(),
@@ -108,29 +122,56 @@ function initStep1() {
     };
 
     jQuery.post(ncuk_ajax.ajax_url, payload, function (res) {
+
+      console.log("DB Save Response:", res);
+
       if (res.success) {
-        saveToLocal();
+
         const s2 = document.querySelector('.sub-tabs li[data-step="2"]');
         if (s2) {
           s2.classList.remove("disabled");
           s2.click();
         }
+
+      } else {
+        console.error("❌ DB Save Failed:", res);
       }
     });
   });
 
+  /** ---------------------------------------------------------
+   * Render Selected SIC Codes
+   --------------------------------------------------------- */
   function updateSelectedBox() {
+
     selectedContainer.innerHTML = "";
     const entries = Object.entries(selectedCodes);
-    if (entries.length === 0) { selectedContainer.textContent = "None Selected"; return; }
+
+    if (entries.length === 0) {
+      selectedContainer.textContent = "None Selected";
+      return;
+    }
+
     entries.forEach(([code, obj]) => {
+
       const div = document.createElement("div");
       div.className = "selected-item";
+      div.style.cssText =
+        "display:flex;justify-content:space-between;align-items:center;margin:4px 0;padding:6px 10px;background:#dff0d8;border-radius:4px;";
+
       div.innerHTML = `
         <span>${code} - ${obj.label}</span>
         <button type="button" class="remove-sic" data-code="${code}">×</button>
       `;
+
       selectedContainer.appendChild(div);
+
+      div.querySelector(".remove-sic").addEventListener("click", function () {
+        delete selectedCodes[code];
+        window.step1SelectedCodes = selectedCodes;
+        document.dispatchEvent(new Event("sicUpdated"));
+      });
     });
   }
+
 }

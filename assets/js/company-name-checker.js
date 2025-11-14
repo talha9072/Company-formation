@@ -6,7 +6,6 @@ jQuery(document).ready(function ($) {
         const search = $("#search").val().trim();
         if (!search) return;
 
-        // Clear old content (helps UX)
         $("#responseContainer").html("<p style='padding:10px;'>Checking...</p>");
 
         $.post(
@@ -17,7 +16,7 @@ jQuery(document).ready(function ($) {
             },
             function (response) {
 
-                // Response format MUST be JSON
+                // Response format check
                 if (!response || !response.data) {
                     $("#responseContainer").html(
                         "<p style='color:red;'>Unexpected response.</p>"
@@ -25,22 +24,37 @@ jQuery(document).ready(function ($) {
                     return;
                 }
 
-                // Display response HTML
+                // Render results box (green/red)
                 if (response.data.html) {
                     $("#responseContainer").html(response.data.html);
                 }
 
-                // Determine availability
+                // Name availability result
                 const isAvailable =
                     response.success &&
                     response.data.available === true;
 
-                // Notify Step-1 validator (form-step1.js listens)
+                // -------------------------------------------------------
+                // SYNC WITH STEP-1 (IMPORTANT FIX)
+                // -------------------------------------------------------
+
+                // Autofill hidden company_name inside Step-1 form
+                const hiddenInput = document.querySelector("#company_name");
+                if (hiddenInput) {
+                    hiddenInput.value = search;
+                }
+
+                // Fire event for Step-1 validator
                 document.dispatchEvent(
                     new CustomEvent("companyNameChecked", {
                         detail: { available: isAvailable }
                     })
                 );
+
+                // If unavailable → empty the hidden field
+                if (!isAvailable && hiddenInput) {
+                    hiddenInput.value = "";
+                }
             }
         );
     });
