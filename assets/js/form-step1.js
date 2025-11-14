@@ -1,16 +1,19 @@
-document.addEventListener("DOMContentLoaded", function () {
-  initStep1();
-  document.addEventListener("step1Loaded", function () { initStep1(); });
-});
+/*************************************************************
+ STEP 1 — DB ONLY MODE (NO LOCAL STORAGE, NO AJAX FORM LOAD)
+*************************************************************/
+document.addEventListener("DOMContentLoaded", initStep1);
 
 function initStep1() {
 
   const businessSelect = document.getElementById("business_activity");
-  if (!businessSelect) return;
+  if (!businessSelect) return; // Step 1 not visible
 
-  console.log("🔥 Step-1 JS Loaded (DB-only mode)");
+  console.log("🔥 Step-1 JS Initialized (DB only, NON-AJAX)");
 
-  // Elements
+
+  /* -----------------------------------------------------------
+     ELEMENTS
+  ----------------------------------------------------------- */
   const companyNameInput = document.querySelector('#step1form input[name="company_name"]');
   const companyType = document.getElementById("company_type");
   const jurisdiction = document.getElementById("jurisdiction");
@@ -22,17 +25,35 @@ function initStep1() {
     return;
   }
 
-  // State
-  let selectedCodes = window.step1SelectedCodes || {};
+
+  /* -----------------------------------------------------------
+     INTERNAL STATE (shared with inline SIC script)
+  ----------------------------------------------------------- */
+  let selectedCodes = {};
   let nameAvailable = false;
 
-  disableSave();
-  function disableSave() { saveButton.disabled = true; saveButton.style.opacity = "0.5"; }
-  function enableSave() { saveButton.disabled = false; saveButton.style.opacity = "1"; }
+  window.step1SelectedCodes = selectedCodes;
 
-  /** ---------------------------------------------------------
-   * VALIDATION LOGIC
-   --------------------------------------------------------- */
+
+  /* -----------------------------------------------------------
+     BUTTON CONTROL
+  ----------------------------------------------------------- */
+  disableSave();
+
+  function disableSave() {
+    saveButton.disabled = true;
+    saveButton.style.opacity = "0.5";
+  }
+
+  function enableSave() {
+    saveButton.disabled = false;
+    saveButton.style.opacity = "1";
+  }
+
+
+  /* -----------------------------------------------------------
+     VALIDATION
+  ----------------------------------------------------------- */
   function validateStep1() {
 
     const okName = companyNameInput.value.trim() !== "";
@@ -48,14 +69,14 @@ function initStep1() {
     }
   }
 
-  /** ---------------------------------------------------------
-   * When NameChecker finishes
-   --------------------------------------------------------- */
+
+  /* -----------------------------------------------------------
+     EVENT FROM NAME CHECKER
+  ----------------------------------------------------------- */
   document.addEventListener("companyNameChecked", function (e) {
 
     nameAvailable = e.detail.available === true;
 
-    // If name is NOT available ⇒ clear hidden input
     if (!nameAvailable) {
       companyNameInput.value = "";
     }
@@ -63,20 +84,20 @@ function initStep1() {
     validateStep1();
   });
 
-  /** ---------------------------------------------------------
-   * SIC updates
-   --------------------------------------------------------- */
-  window.step1SelectedCodes = selectedCodes;
 
+  /* -----------------------------------------------------------
+     EVENT FROM INLINE SIC SCRIPT
+  ----------------------------------------------------------- */
   document.addEventListener("sicUpdated", function () {
     selectedCodes = window.step1SelectedCodes;
     updateSelectedBox();
     validateStep1();
   });
 
-  /** ---------------------------------------------------------
-   * RESTORE FROM DB only (NO LOCAL STORAGE)
-   --------------------------------------------------------- */
+
+  /* -----------------------------------------------------------
+     RESTORE DATA FROM DB (ONLY ONE TRUE SOURCE)
+  ----------------------------------------------------------- */
   restoreFromDB();
 
   function restoreFromDB() {
@@ -84,9 +105,16 @@ function initStep1() {
     jQuery.post(ncuk_ajax.ajax_url, { action: "ncuk_load_step1" }, function (res) {
 
       if (!res.success || !res.data) return;
+
       const d = res.data;
 
-      if (d.company_name) companyNameInput.value = d.company_name;
+      console.log("🔄 Restored from DB:", d);
+
+      if (d.company_name) {
+        companyNameInput.value = d.company_name;
+        nameAvailable = true;
+      }
+
       if (d.company_type) companyType.value = d.company_type;
       if (d.jurisdiction) jurisdiction.value = d.jurisdiction;
       if (d.business_activity) businessSelect.value = d.business_activity;
@@ -99,17 +127,18 @@ function initStep1() {
       updateSelectedBox();
       validateStep1();
 
-      // Unlock Step-2 if DB has old data
+      // Unlock step 2 if restored data is complete
       if (d.company_name && d.company_type && d.jurisdiction && d.business_activity) {
-        const s2 = document.querySelector('.sub-tabs li[data-step="2"]');
+        const s2 = document.querySelector('.step-item[data-step="2"]');
         if (s2) s2.classList.remove("disabled");
       }
     });
   }
 
-  /** ---------------------------------------------------------
-   * SAVE TO DATABASE ONLY
-   --------------------------------------------------------- */
+
+  /* -----------------------------------------------------------
+     SAVE IN DB ONLY (NO LOCAL STORAGE)
+  ----------------------------------------------------------- */
   saveButton.addEventListener("click", function () {
 
     const payload = {
@@ -123,28 +152,30 @@ function initStep1() {
 
     jQuery.post(ncuk_ajax.ajax_url, payload, function (res) {
 
-      console.log("DB Save Response:", res);
+      console.log("💾 DB Save Response:", res);
 
       if (res.success) {
 
-        const s2 = document.querySelector('.sub-tabs li[data-step="2"]');
-        if (s2) {
-          s2.classList.remove("disabled");
-          s2.click();
+        // Unlock step 2
+        const step2 = document.querySelector('.step-item[data-step="2"]');
+        if (step2) {
+          step2.classList.remove("disabled");
+          step2.click(); // Go to step 2
         }
 
       } else {
-        console.error("❌ DB Save Failed:", res);
+        console.error("❌ ERROR saving Step-1:", res);
       }
     });
   });
 
-  /** ---------------------------------------------------------
-   * Render Selected SIC Codes
-   --------------------------------------------------------- */
-  function updateSelectedBox() {
 
+  /* -----------------------------------------------------------
+     RENDER SELECTED SIC CODES
+  ----------------------------------------------------------- */
+  function updateSelectedBox() {
     selectedContainer.innerHTML = "";
+
     const entries = Object.entries(selectedCodes);
 
     if (entries.length === 0) {
@@ -157,7 +188,8 @@ function initStep1() {
       const div = document.createElement("div");
       div.className = "selected-item";
       div.style.cssText =
-        "display:flex;justify-content:space-between;align-items:center;margin:4px 0;padding:6px 10px;background:#dff0d8;border-radius:4px;";
+        "display:flex;justify-content:space-between;align-items:center;" +
+        "margin:4px 0;padding:6px 10px;background:#dff0d8;border-radius:4px;";
 
       div.innerHTML = `
         <span>${code} - ${obj.label}</span>
@@ -173,5 +205,4 @@ function initStep1() {
       });
     });
   }
-
 }

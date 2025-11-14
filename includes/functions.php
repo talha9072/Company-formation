@@ -1,9 +1,9 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-/*--------------------------------------------------------------
-# 1. Helper: Remove common suffixes like LTD, PLC, etc.
---------------------------------------------------------------*/
+/* -------------------------------------------------------------
+   1. REMOVE SUFFIXES (Helper for Name Check)
+------------------------------------------------------------- */
 function ncuk_remove_suffixes($name) {
     $ignoreSuffixes = [
         " LTD", " CO", " UK", " PCL", " LIMITED", " PLC", " LLP", " GROUP",
@@ -17,51 +17,52 @@ function ncuk_remove_suffixes($name) {
     return preg_replace('/\b(' . implode('|', $ignoreSuffixes) . ')\b/i', '', $name);
 }
 
-/*--------------------------------------------------------------
-# 2. Enqueue Scripts & Styles
---------------------------------------------------------------*/
+/* -------------------------------------------------------------
+   2. ENQUEUE SCRIPTS
+------------------------------------------------------------- */
 add_action('wp_enqueue_scripts', function () {
-    // jQuery (needed for AJAX)
     wp_enqueue_script('jquery');
 
-    // Plugin JS
     wp_enqueue_script(
         'ncuk-checker',
         NCUK_URL . 'assets/js/company-name-checker.js',
         ['jquery'],
-        null,
+        filemtime(NCUK_PATH . 'assets/js/company-name-checker.js'),
         true
     );
 
-    // Localize (for AJAX URLs)
     wp_localize_script('ncuk-checker', 'ncuk_ajax', [
-        'ajax_url' => admin_url('admin-ajax.php'),
+        'ajax_url' => admin_url('admin-ajax.php')
     ]);
 
-    // Enqueue your main CSS
     wp_enqueue_style(
         'ncuk-styles',
         NCUK_URL . 'assets/css/index.css',
         [],
-        filemtime(NCUK_PATH . 'assets/css/index.css') // cache-busting on changes
+        filemtime(NCUK_PATH . 'assets/css/index.css')
     );
 });
+
 require_once NCUK_PATH . 'includes/wizard-step1-storage.php';
 
-/*--------------------------------------------------------------
-# 3. AJAX Handler: Company Name Check
---------------------------------------------------------------*/
+/* -------------------------------------------------------------
+   3. COMPANY NAME CHECK AJAX
+------------------------------------------------------------- */
 function ncuk_ajax_handler() {
+
     $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
     $apiKey = get_option('namecheck_uk_api_key', '');
 
     if (!$search) {
-        wp_send_json_error(['html' => '<div class="response-box" style="background:#ff4f4f;color:white;padding:20px;border-radius:10px;">Please enter a company name.</div>']);
+        wp_send_json_error([
+            'html' => '<div class="response-box" style="background:#ff4f4f;color:white;padding:20px;border-radius:10px;">Enter a name.</div>'
+        ]);
     }
 
-    // Reserved keyword check
-    $reservedResponse = function_exists('isReservedKeyword') ? isReservedKeyword($search) : false;
-    $reservedPhraseResponse = function_exists('containsReservedPhrase') ? containsReservedPhrase($search) : false;
+    $cleaned = ncuk_remove_suffixes($search);
+
+    $reservedResponse = function_exists('isReservedKeyword') ? isReservedKeyword($cleaned) : false;
+    $reservedPhraseResponse = function_exists('containsReservedPhrase') ? containsReservedPhrase($cleaned) : false;
 
     if ($reservedResponse || $reservedPhraseResponse) {
         wp_send_json_success([
@@ -72,12 +73,11 @@ function ncuk_ajax_handler() {
 
     if (empty($apiKey)) {
         wp_send_json_error([
-            'html' => ncuk_build_response('#ff4f4f', '', 'Error', 'API Key not configured.')
+            'html' => ncuk_build_response('#ff4f4f', '', 'Error', 'API Key missing.')
         ]);
     }
 
-    // Call Companies House API
-    $url = "https://api.companieshouse.gov.uk/search/companies?q=" . urlencode(ncuk_remove_suffixes($search));
+    $url = "https://api.companieshouse.gov.uk/search/companies?q=" . urlencode($cleaned);
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL => $url,
@@ -90,7 +90,7 @@ function ncuk_ajax_handler() {
 
     if ($code != 200) {
         wp_send_json_error([
-            'html' => ncuk_build_response('#ff4f4f', '', 'Error', 'Unable to retrieve results.')
+            'html' => ncuk_build_response('#ff4f4f', '', 'Error', 'API request failed.')
         ]);
     }
 
@@ -99,7 +99,7 @@ function ncuk_ajax_handler() {
 
     if (!empty($data['items'])) {
         foreach ($data['items'] as $item) {
-            if (strcasecmp(ncuk_remove_suffixes($item['title']), ncuk_remove_suffixes($search)) === 0) {
+            if (strcasecmp(ncuk_remove_suffixes($item['title']), $cleaned) === 0) {
                 $exists = true;
                 break;
             }
@@ -109,50 +109,51 @@ function ncuk_ajax_handler() {
     if ($exists) {
         wp_send_json_success([
             'available' => false,
-            'html' => ncuk_build_response('#ff4f4f', 'remove.png', $search, 'This name is not available.')
-        ]);
-    } else {
-        wp_send_json_success([
-            'available' => true,
-            'html' => ncuk_build_response('#28a745', 'success-icon.png', $search, 'This name is available!')
+            'html' => ncuk_build_response('#ff4f4f', 'remove.png', $search, 'Name already exists.')
         ]);
     }
+
+    wp_send_json_success([
+        'available' => true,
+        'html' => ncuk_build_response('#28a745', 'success-icon.png', $search, 'Name is available!')
+    ]);
 }
+
 add_action('wp_ajax_company_name_checker', 'ncuk_ajax_handler');
 add_action('wp_ajax_nopriv_company_name_checker', 'ncuk_ajax_handler');
 
-/*--------------------------------------------------------------
-# 4. Helper: Styled Response Box
---------------------------------------------------------------*/
+/* -------------------------------------------------------------
+   4. NAME CHECK RESPONSE BOX BUILDER
+------------------------------------------------------------- */
 function ncuk_build_response($color, $icon, $title, $message) {
-    $img = $icon ? '<img src="' . NCUK_URL . 'assets/images/' . $icon . '" style="width:50px;height:50px;margin-bottom:15px;">' : '';
-    return '<div class="response-box" style="background-color:' . esc_attr($color) . ';color:white;padding:20px;margin-top:20px;border-radius:10px;text-align:center;">' .
-           $img . '<h2>' . esc_html($title) . '</h2><p>' . esc_html($message) . '</p></div>';
+    $img = $icon
+        ? '<img src="' . NCUK_URL . 'assets/images/' . $icon . '" style="width:50px;height:50px;margin-bottom:15px;">'
+        : '';
+    return '<div class="response-box" style="background:' . esc_attr($color) . ';color:white;padding:20px;border-radius:10px;text-align:center;">'
+            . $img . '<h2>' . esc_html($title) . '</h2><p>' . esc_html($message) . '</p></div>';
 }
 
-/*--------------------------------------------------------------
-# 5. Company Name Checker Shortcode [company_name_checker]
---------------------------------------------------------------*/
+/* -------------------------------------------------------------
+   5. SHORTCODE — NAME CHECKER
+------------------------------------------------------------- */
 function ncuk_shortcode() {
     ob_start(); ?>
     <style>
-        .input-group { display:flex; justify-content:center; margin-top:20px; }
+        .input-group { display:flex; margin-top:20px; }
         .search-query {
-            flex:1; padding:15px !important; border:2px solid #E67000;
-            border-radius:50px 0 0 50px; font-size:16px; outline:none;
+            flex:1; padding:15px; border:2px solid #E67000;
+            border-radius:50px 0 0 50px; font-size:16px;
         }
         .btn {
             padding:15px 25px; background:#E67000; color:white;
             border:none; border-radius:0 50px 50px 0; cursor:pointer;
-            font-size:16px;
         }
         .btn:hover { background:#cc5900; }
-        #responseContainer h2 { color:white; font-weight:700; }
     </style>
 
-    <form id="companyNameCheckerForm" style="text-align:center;">
+    <form id="companyNameCheckerForm">
         <div class="input-group">
-            <input type="text" name="search" id="search" class="search-query" placeholder="Enter company name" />
+            <input type="text" name="search" id="search" class="search-query" placeholder="Enter company name">
             <button type="submit" class="btn">Check</button>
         </div>
     </form>
@@ -161,239 +162,115 @@ function ncuk_shortcode() {
 }
 add_shortcode('company_name_checker', 'ncuk_shortcode');
 
-/*--------------------------------------------------------------
-# 6. Wrapper Shortcode [company_formation_wizard]
---------------------------------------------------------------*/
+/* -------------------------------------------------------------
+   6. WIZARD SHORTCODE — NO AJAX (STATIC FORMS)
+------------------------------------------------------------- */
 function ncuk_wrapper_shortcode() {
     ob_start(); ?>
-    
+
     <style>
         .sub-tabs {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
-            padding: 0;
-            list-style: none;
+            display:flex; gap:15px; margin:20px 0;
+            padding:0; list-style:none;
         }
-
         .step-item {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-            padding: 12px 20px;
-            border: 2px solid #ccc;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-            user-select: none;
-            text-align: center;
+            display:flex; gap:5px; align-items:center;
+            padding:12px 20px; border:2px solid #ccc;
+            border-radius:10px; cursor:pointer; transition:.3s;
         }
-
         .step-item .step-circle {
-            width: 32px;
-            height: 32px;
-            background: #ccc;
-            color: #fff;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 6px;
+            width:32px; height:32px; background:#ccc; color:white;
+            border-radius:50%; display:flex; justify-content:center; align-items:center;
         }
+        .step-item.active { border-color:#4a3b8f; }
+        .step-item.active .step-circle { background:#E67000; }
+        .step-item.disabled { opacity:.4; pointer-events:none; }
 
-        .step-item .step-label {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        /* Active Step */
-        .step-item.active {
-            border-color: #4a3b8f;
-        }
-        .step-item.active .step-circle {
-            background: #E67000;
-        }
-
-        /* Completed Step */
-        .step-item.completed {
-            border-color: #28a745;
-        }
+        .step-item.completed { border-color:#28a745; }
         .step-item.completed .step-circle {
-            background: #28a745 !important;
-            position: relative;
-            color: transparent;
+            background:#28a745; color:transparent; position:relative;
         }
         .step-item.completed .step-circle::before {
-            content: "✔";
-            color: #fff;
-            font-size: 17px;
-            font-weight: bold;
-            position: absolute;
+            content:"✔"; color:white; font-size:16px; position:absolute;
         }
 
-        /* Disabled Step */
-        .step-item.disabled {
-            opacity: 0.4;
-            pointer-events: none;
-        }
+        .step-form { display:none; }
+        .step-form.active { display:block; }
     </style>
 
     <div class="company-formation-wrapper">
 
-        <div class="main-tab-header">
-            <h2 class="main-tab-title">Company Formation</h2>
-            <p class="main-tab-subtitle">Complete your company registration in a few easy steps</p>
-        </div>
+        <h2 class="main-tab-title">Company Formation</h2>
+        <p class="main-tab-subtitle">Complete your registration in simple steps</p>
 
-        <!-- Tabs -->
         <ul class="sub-tabs">
-            <li class="step-item active" data-step="1">
-                <span class="step-circle">1</span>
-                <span class="step-label">Particulars</span>
-            </li>
-
-            <li class="step-item disabled" data-step="2">
-                <span class="step-circle">2</span>
-                <span class="step-label">Addresses</span>
-            </li>
-
-            <li class="step-item disabled" data-step="3">
-                <span class="step-circle">3</span>
-                <span class="step-label">Appointments</span>
-            </li>
-
-            <li class="step-item disabled" data-step="4">
-                <span class="step-circle">4</span>
-                <span class="step-label">Documents</span>
-            </li>
+            <li class="step-item active" data-step="1"><span class="step-circle">1</span> Particulars</li>
+            <li class="step-item disabled" data-step="2"><span class="step-circle">2</span> Addresses</li>
+            <li class="step-item disabled" data-step="3"><span class="step-circle">3</span> Appointments</li>
+            <li class="step-item disabled" data-step="4"><span class="step-circle">4</span> Documents</li>
         </ul>
 
-        <div id="step-content">
-            <div id="step1-name-checker">
-                <?php echo do_shortcode('[company_name_checker]'); ?>
-            </div>
+        <div id="step1-name-checker">
+            <?php echo do_shortcode('[company_name_checker]'); ?>
+        </div>
 
-            <div id="step-form">
+        <div id="all-steps">
+            <div id="step1" class="step-form active">
                 <?php ncuk_render_step_form(1); ?>
             </div>
+            <div id="step2" class="step-form">
+                <?php ncuk_render_step_form(2); ?>
+            </div>
+            <div id="step3" class="step-form">
+                <?php ncuk_render_step_form(3); ?>
+            </div>
+            <div id="step4" class="step-form">
+                <?php ncuk_render_step_form(4); ?>
+            </div>
         </div>
+
     </div>
 
 <script>
 jQuery(document).ready(function($){
+    $(".step-item").on("click", function(){
 
-    $(".step-item").on("click", function(e){
-
-        if($(this).hasClass("disabled")){
-            e.preventDefault();
-            return false;
-        }
+        if($(this).hasClass("disabled")) return;
 
         const step = $(this).data("step");
 
-        // Remove all active states
         $(".step-item").removeClass("active");
+        $(this).addClass("active");
 
-        // Mark previous steps as completed
+        // Complete previous
         $(".step-item").each(function(){
-            const thisStep = $(this).data("step");
-            if(thisStep < step){
+            if($(this).data("step") < step){
                 $(this).addClass("completed");
             }
         });
 
-        // Activate clicked step
-        $(this).addClass("active");
+        // Show correct form
+        $(".step-form").removeClass("active");
+        $("#step"+step).addClass("active");
 
-        // Load step content
-        $.post(ncuk_ajax.ajax_url, {
-            action: "load_step_form",
-            step: step
-        }, function(response){
-
-            $("#step-form").html(response);
-
-            if(step > 1){
-                $("#step1-name-checker").hide();
-            } else {
-                $("#step1-name-checker").show();
-            }
-        });
-
+        // Only Step1 shows name checker
+        if(step == 1) $("#step1-name-checker").show();
+        else $("#step1-name-checker").hide();
     });
-
 });
 </script>
 
-    <?php
-    return ob_get_clean();
+    <?php return ob_get_clean();
 }
 add_shortcode('company_formation_wizard', 'ncuk_wrapper_shortcode');
 
-
-
-/*--------------------------------------------------------------
-# 7. AJAX Loader for Step Forms (FIXED)
---------------------------------------------------------------*/
-add_action('wp_ajax_load_step_form', 'ncuk_load_step_form');
-add_action('wp_ajax_nopriv_load_step_form', 'ncuk_load_step_form');
-
-function ncuk_load_step_form() {
-
-    $step = isset($_POST['step']) ? intval($_POST['step']) : 1;
-
-    ob_start();
-
-    // Load the correct step form
-    ncuk_render_step_form($step);
-
-    // 🔥 THE IMPORTANT FIX:
-    // When Step 1 reloads, we must tell the JS to re-initialize Step-1 logic again.
-    if ($step == 1) {
-        echo '<script>document.dispatchEvent(new Event("step1Loaded"));</script>';
-    }
-
-    $html = ob_get_clean();
-    echo $html;
-
-    wp_die();
-}
-
-
-/*--------------------------------------------------------------
-# 8. Step Form Renderer (includes external files)
---------------------------------------------------------------*/
+/* -------------------------------------------------------------
+   7. STEP FORM RENDERER
+------------------------------------------------------------- */
 function ncuk_render_step_form($step) {
-    $base_path = NCUK_PATH . 'includes/forms/'; // Folder where all step files are stored
+    $base = NCUK_PATH . 'includes/forms/';
 
-    switch ($step) {
-        case 1:
-            $file = $base_path . 'form-step1.php'; // Particulars
-            break;
-
-        case 2:
-            $file = $base_path . 'form-step2.php'; // Addresses
-            break;
-
-        case 3:
-            $file = $base_path . 'form-step3.php'; // Appointments
-            break;
-
-        case 4:
-            $file = $base_path . 'form-step4.php'; // Documents
-            break;
-
-        default:
-            echo '<p>Invalid step.</p>';
-            return;
-    }
-
-    // Safely include the file
-    if (file_exists($file)) {
-        include $file;
-    } else {
-        echo '<p>Form file not found for step ' . intval($step) . '.</p>';
-    }
+    $file = $base . "form-step{$step}.php";
+    if (file_exists($file)) include $file;
+    else echo "<p>Form file missing for step {$step}</p>";
 }
