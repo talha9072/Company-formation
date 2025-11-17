@@ -36,7 +36,7 @@ add_action('admin_menu', function () {
         25
     );
 
-    // NEW SUBMENU → Wizard Tester
+    // Submenu 1: NameCheck Form
     add_submenu_page(
         'namecheck-uk-settings',
         'NameCheck Form',
@@ -45,7 +45,25 @@ add_action('admin_menu', function () {
         'namecheck-uk-admin-shortcode',
         'ncuk_render_admin_shortcode_page'
     );
+
+    // ⭐ NEW SUBMENU: Registered Address
+    add_submenu_page(
+        'namecheck-uk-settings',
+        'Registered Address',
+        'Registered Address',
+        'manage_options',
+        'namecheck-uk-registered-address',
+        'ncuk_render_registered_address_page'
+    );
 });
+
+/* ===============================================================
+   CALLBACK: Registered Address Page
+===============================================================*/
+function ncuk_render_registered_address_page() {
+    include NCUK_PATH . 'registered-address.php';
+}
+
 
 
 /* ===============================================================
