@@ -15,7 +15,8 @@ define('NCUK_URL', plugin_dir_url(__FILE__));
 // Include required files
 require_once NCUK_PATH . 'includes/functions.php';
 require_once NCUK_PATH . 'includes/reserved.php';
-require_once NCUK_PATH . 'includes/wizard-step1-storage.php';   //  ✅ IMPORTANT
+require_once NCUK_PATH . 'includes/wizard-step1-storage.php';
+require_once NCUK_PATH . 'includes/wizard-step2-storage.php';   //  ✅ IMPORTANT
 
 
 /* ===============================================================
