@@ -86,7 +86,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const step3 = document.querySelector('.step-item[data-step="3"]');
             if (step3) {
                 step3.classList.remove("disabled");
-                step3.classList.add("completed");
                 step3.click();
             }
         });
