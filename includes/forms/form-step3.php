@@ -38,8 +38,15 @@ wp_enqueue_script(
     <?php include NCUK_PATH . "includes/forms/step3/officer-corporate.php"; ?>
     <?php include NCUK_PATH . "includes/forms/step3/officer-entity.php"; ?>
 
-    <h3 style="font-size:24px;color:#4a3b8f;margin-top:40px;">Current Appointments</h3>
-    <?php include NCUK_PATH . "includes/forms/step3/officer-table.php"; ?>
+    <!-- =======================
+     CURRENT APPOINTMENTS
+======================= -->
+<h3 style="font-size:24px;color:#4a3b8f;margin-bottom:15px;">Current Appointments</h3>
+<p style="color:#555;margin-bottom:20px;">
+    Below is a list of officers currently assigned to your company.
+</p>
+
+<div id="officer-list"></div>
 
     <div style="margin-top:40px;text-align:right;">
         <button id="step3-save" style="background:#1a8f4a;color:white;padding:12px 35px;border:none;border-radius:6px;">

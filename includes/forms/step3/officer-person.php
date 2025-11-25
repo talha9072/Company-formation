@@ -84,30 +84,76 @@
     </div>
 
 
-    <!-- =========================
-         TAB: OFFICER
-    ========================= -->
-    <div id="tab-off" class="step3-tab-content">
-        <h3>Officer</h3>
-        <p>Officer fields...</p>
+   <!-- =========================
+     TAB: OFFICER
+========================= -->
+<div id="tab-off" class="step3-tab-content">
+
+    <h3>Officer</h3>
+
+    <p>Select officer type:</p>
+
+    <div class="step3-checkbox-list">
+
+        <label class="step3-check">
+            <input type="radio" name="officer_type" value="person" checked>
+            Individual Person
+        </label>
+
+        <label class="step3-check">
+            <input type="radio" name="officer_type" value="corporate">
+            Corporate Officer
+        </label>
+
+        <label class="step3-check">
+            <input type="radio" name="officer_type" value="entity">
+            Other Legal Entity
+        </label>
+
     </div>
 
+    <button id="officer-next-btn" class="step3-save-tab">Continue →</button>
 
-    <!-- =========================
-         TAB: DETAILS
-    ========================= -->
-    <div id="tab-det" class="step3-tab-content">
-        <h3>Details</h3>
-        <p>Details fields...</p>
-    </div>
+</div>
 
 
     <!-- =========================
-         TAB: ADDRESSING
-    ========================= -->
-    <div id="tab-addr" class="step3-tab-content">
-        <h3>Addressing</h3>
-        <p>Address fields...</p>
-    </div>
+     TAB: DETAILS
+========================= -->
+<div id="tab-det" class="step3-tab-content">
+
+    <h3>Officer Details</h3>
+
+    <label>First Name</label>
+    <input type="text" id="det_first" class="widefat">
+
+    <label>Last Name</label>
+    <input type="text" id="det_last" class="widefat">
+
+    <label>Date of Birth</label>
+    <input type="date" id="det_dob" class="widefat">
+
+    <button id="details-next-btn" class="step3-save-tab">Continue →</button>
+</div>
+
+
+    <!-- =========================
+     TAB: ADDRESSING
+========================= -->
+<div id="tab-addr" class="step3-tab-content">
+
+    <h3>Address</h3>
+
+    <label>Address Line 1</label>
+    <input type="text" id="addr_line1" class="widefat">
+
+    <label>City</label>
+    <input type="text" id="addr_city" class="widefat">
+
+    <label>Postcode</label>
+    <input type="text" id="addr_postcode" class="widefat">
+
+    <button id="address-save-btn" class="step3-save-tab">Save Officer</button>
+</div>
 
 </div>
