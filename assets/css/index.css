@@ -178,3 +178,66 @@
   border-radius: 5px;
   min-height: 42px;
 }
+
+
+.step3-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.step3-tab {
+    padding: 8px 18px;
+    background: #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    font-weight: 500;
+}
+
+.step3-tab.active {
+    background: #5d528d;
+    color: white;
+    border-color: #5d528d;
+}
+
+.step3-tab-content {
+    display: none;
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 22px;
+    border-radius: 6px;
+}
+
+.step3-check {
+    margin: 10px 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.step3-check input[type="checkbox"] {
+    width: auto !important;
+    margin-right: 8px;
+}
+
+.step3-submenu-panel {
+    padding: 15px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    border-radius: 6px;
+    margin-top: 20px;
+}
+
+/* FIX CHECKBOX override from admin/theme */
+.step3-form-box input[type="checkbox"] {
+    width: auto !important;
+    display: inline-block !important;
+    margin-right: 6px;
+    accent-color: #4a3b8f; /* nice purple tick */
+}
+.step3-form-box .step3-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
