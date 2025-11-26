@@ -202,3 +202,29 @@ document.addEventListener("DOMContentLoaded", function () {
     switchTab("#tab-pos");
     refreshRoleLogic();
 });
+
+
+/* ============================
+   SERVICE ADDRESS SELECTION
+============================ */
+
+document.querySelectorAll(".addr-option").forEach(option => {
+    option.addEventListener("click", function () {
+
+        let value = this.dataset.value;
+
+        // Highlight
+        document.querySelectorAll(".addr-option").forEach(o => o.classList.remove("active"));
+        this.classList.add("active");
+
+        // Select radio
+        this.querySelector("input[type='radio']").checked = true;
+
+        // Show or hide own fields
+        if (value === "own") {
+            document.getElementById("own-address-box").style.display = "block";
+        } else {
+            document.getElementById("own-address-box").style.display = "none";
+        }
+    });
+});

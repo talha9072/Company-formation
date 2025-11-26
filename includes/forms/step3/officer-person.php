@@ -3,7 +3,6 @@
     <!-- FIXED MAIN TABS -->
     <div class="step3-tabs">
         <button class="step3-tab active" data-target="#tab-pos">Position</button>
-        <button class="step3-tab" data-target="#tab-off">Officer</button>
         <button class="step3-tab" data-target="#tab-det">Details</button>
         <button class="step3-tab" data-target="#tab-addr">Addressing</button>
 
@@ -84,77 +83,260 @@
     </div>
 
 
-   <!-- =========================
-     TAB: OFFICER
+
+
+    <!-- =========================
+     TAB: DETAILS (PERSON)
 ========================= -->
-<div id="tab-off" class="step3-tab-content">
+<div id="tab-det" class="step3-tab-content" style="display:none;">
 
-    <h3>Officer</h3>
+    <h2 style="margin-bottom:25px;">Officer Details</h2>
 
-    <p>Select officer type:</p>
+    <!-- PERSONAL DETAILS -->
+    <h3 style="color:#4a3b8f;margin-bottom:10px;">Personal Details</h3>
 
-    <div class="step3-checkbox-list">
+    <div class="step3-grid">
+        <!-- Title -->
+        <div class="grid-item">
+            <label>Title</label>
+            <input type="text" id="det_title" placeholder="Title" class="widefat">
+        </div>
 
-        <label class="step3-check">
-            <input type="radio" name="officer_type" value="person" checked>
-            Individual Person
-        </label>
+        <!-- DOB -->
+        <div class="grid-item">
+            <label>Date of Birth</label>
+            <div class="dob-flex">
+                <select id="dob_day" class="dob-input">
+                    <option value="">dd</option>
+                    <?php for($i=1;$i<=31;$i++) echo "<option>$i</option>"; ?>
+                </select>
 
-        <label class="step3-check">
-            <input type="radio" name="officer_type" value="corporate">
-            Corporate Officer
-        </label>
+                <select id="dob_month" class="dob-input">
+                    <option value="">mm</option>
+                    <?php for($i=1;$i<=12;$i++) echo "<option>$i</option>"; ?>
+                </select>
 
-        <label class="step3-check">
-            <input type="radio" name="officer_type" value="entity">
-            Other Legal Entity
-        </label>
+                <select id="dob_year" class="dob-input">
+                    <option value="">yyyy</option>
+                    <?php for($y=date('Y')-16;$y>=1900;$y--) echo "<option>$y</option>"; ?>
+                </select>
+            </div>
+        </div>
+
+        <!-- First Name -->
+        <div class="grid-item">
+            <label>First name</label>
+            <input type="text" id="det_first" placeholder="First name" class="widefat">
+        </div>
+
+        <!-- Email -->
+        <div class="grid-item">
+            <label>Email</label>
+            <input type="email" id="det_email" placeholder="Email" class="widefat">
+        </div>
+
+        <!-- Last Name -->
+        <div class="grid-item">
+            <label>Last name</label>
+            <input type="text" id="det_last" placeholder="Last name" class="widefat">
+        </div>
+
+        <!-- Nationality -->
+        <div class="grid-item">
+            <label>Nationality</label>
+            <input type="text" id="det_nationality" placeholder="Nationality" class="widefat">
+        </div>
+
+        <!-- Personal Verification Code -->
+        <div class="grid-item-full">
+            <label>Personal Verification Code (optional)</label>
+            <input type="text" id="det_verification" placeholder="Personal Verification Code" class="widefat">
+        </div>
+    </div>
+
+
+
+    <!-- RESIDENTIAL ADDRESS -->
+    <h3 style="color:#4a3b8f;margin:25px 0 10px;">Residential Address</h3>
+
+    <div class="step3-grid">
+
+        <div class="grid-item">
+            <label>Name/Number *</label>
+            <input type="text" id="addr_line1" placeholder="Name/Number" class="widefat">
+        </div>
+
+        <div class="grid-item">
+            <label>Street *</label>
+            <input type="text" id="addr_line2" placeholder="Street" class="widefat">
+        </div>
+
+        <div class="grid-item">
+            <label>Locality</label>
+            <input type="text" id="addr_line3" placeholder="Locality" class="widefat">
+        </div>
+
+        <div class="grid-item">
+            <label>Town *</label>
+            <input type="text" id="addr_town" placeholder="Town" class="widefat">
+        </div>
+
+        <div class="grid-item">
+            <label>Country *</label>
+            <select id="addr_country" class="widefat">
+                <option>UNITED KINGDOM</option>
+            </select>
+        </div>
+
+        <div class="grid-item">
+            <label>Postal Code *</label>
+            <input type="text" id="addr_postcode" placeholder="Postcode" class="widefat">
+        </div>
+    </div>
+
+
+
+    <!-- CONSENT -->
+    <h3 style="color:#4a3b8f;margin:25px 0 10px;">Authentication Consent</h3>
+
+    <label class="step3-check">
+        <input type="checkbox" id="consent_auth">
+        The subscriber agrees their name is used to electronically authenticate the memorandum of association.
+    </label>
+
+
+    <!-- CONTINUE -->
+    <button id="details-next-btn" class="step3-save-tab" style="margin-top:25px;">
+        Continue →
+    </button>
+
+</div>
+
+
+
+    <!-- =========================
+     TAB: ADDRESSING (SERVICE ADDRESS)
+========================= -->
+<div id="tab-addr" class="step3-tab-content" style="display:none;">
+
+    <h2 style="margin-bottom:25px;">Service Address</h2>
+
+    <!-- BOX TITLE -->
+    <div style="background:#f5f7ff;padding:25px;border-radius:6px;margin-bottom:25px;display:flex;gap:20px;align-items:center;">
+        <div style="font-size:40px;">📨</div>
+        <div>
+            <h3 style="margin:0;">Service Address</h3>
+            <p style="margin:5px 0 0;">
+                The service address is a location where official documents and notices can be delivered for this officer.
+            </p>
+        </div>
+    </div>
+
+    <!-- SELECTION -->
+    <h3 style="color:#4a3b8f;">Choose an Address</h3>
+
+    <div id="service-address-options">
+
+        <!-- Cambridge -->
+        <div class="addr-option" data-value="cambridge">
+            <div class="addr-header">
+                <input type="radio" name="service_addr_type" value="cambridge">
+                <span>Cambridge Directors Service Address</span>
+            </div>
+            <p class="addr-desc">
+                Use of our Cambridge address as your service address for up to 2 officers, for 1 year.
+            </p>
+        </div>
+
+        <!-- London -->
+        <div class="addr-option" data-value="london">
+            <div class="addr-header">
+                <input type="radio" name="service_addr_type" value="london">
+                <span>London Directors Service Address</span>
+            </div>
+            <p class="addr-desc">
+                Use of our London address as your service address for up to 2 officers, for 1 year.
+            </p>
+        </div>
+
+        <!-- Own address -->
+        <div class="addr-option" data-value="own">
+            <div class="addr-header">
+                <input type="radio" name="service_addr_type" value="own">
+                <span>Use Your Own Address</span>
+            </div>
+            <p class="addr-desc">
+                Provide your residential service address manually.
+            </p>
+        </div>
 
     </div>
 
-    <button id="officer-next-btn" class="step3-save-tab">Continue →</button>
+
+    <!-- OWN ADDRESS FIELDS (HIDDEN UNTIL SELECTED) -->
+    <div id="own-address-box" style="display:none;margin-top:25px;">
+
+        <h3 style="color:#4a3b8f;">Your Residential Address</h3>
+
+        <div class="step3-grid">
+
+            <div class="grid-item">
+                <label>Name/Number *</label>
+                <input type="text" id="own_name_number" class="widefat">
+            </div>
+
+            <div class="grid-item">
+                <label>Street *</label>
+                <input type="text" id="own_street" class="widefat">
+            </div>
+
+            <div class="grid-item">
+                <label>Locality</label>
+                <input type="text" id="own_locality" class="widefat">
+            </div>
+
+            <div class="grid-item">
+                <label>Address Line 2</label>
+                <input type="text" id="own_line2" class="widefat">
+            </div>
+
+            <div class="grid-item">
+                <label>Address Line 3</label>
+                <input type="text" id="own_line3" class="widefat">
+            </div>
+
+            <div class="grid-item">
+                <label>Town *</label>
+                <input type="text" id="own_town" class="widefat">
+            </div>
+
+            <div class="grid-item">
+                <label>Address Line 4</label>
+                <input type="text" id="own_line4" class="widefat">
+            </div>
+
+            <div class="grid-item">
+                <label>Country *</label>
+                <select id="own_country" class="widefat">
+                    <option value="UNITED KINGDOM">UNITED KINGDOM</option>
+                </select>
+            </div>
+
+            <div class="grid-item">
+                <label>Postal Code *</label>
+                <input type="text" id="own_postcode" class="widefat">
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SAVE -->
+    <button id="address-save-btn" class="step3-save-tab" style="margin-top:30px;">
+        Save Officer
+    </button>
 
 </div>
 
-
-    <!-- =========================
-     TAB: DETAILS
-========================= -->
-<div id="tab-det" class="step3-tab-content">
-
-    <h3>Officer Details</h3>
-
-    <label>First Name</label>
-    <input type="text" id="det_first" class="widefat">
-
-    <label>Last Name</label>
-    <input type="text" id="det_last" class="widefat">
-
-    <label>Date of Birth</label>
-    <input type="date" id="det_dob" class="widefat">
-
-    <button id="details-next-btn" class="step3-save-tab">Continue →</button>
-</div>
-
-
-    <!-- =========================
-     TAB: ADDRESSING
-========================= -->
-<div id="tab-addr" class="step3-tab-content">
-
-    <h3>Address</h3>
-
-    <label>Address Line 1</label>
-    <input type="text" id="addr_line1" class="widefat">
-
-    <label>City</label>
-    <input type="text" id="addr_city" class="widefat">
-
-    <label>Postcode</label>
-    <input type="text" id="addr_postcode" class="widefat">
-
-    <button id="address-save-btn" class="step3-save-tab">Save Officer</button>
-</div>
 
 </div>
 
