@@ -10,7 +10,6 @@ function initStep1() {
 
   console.log("🔥 Step-1 JS Initialized (DB only, NON-AJAX)");
 
-
   /* -----------------------------------------------------------
      ELEMENTS
   ----------------------------------------------------------- */
@@ -20,20 +19,20 @@ function initStep1() {
   const selectedContainer = document.getElementById("selected_sic_codes");
   const saveButton = document.getElementById("step1-save");
 
-  if (!companyNameInput) {
-    console.error("❌ Hidden company_name field missing!");
+  if (!companyNameInput || !companyType || !jurisdiction || !saveButton) {
+    console.error("❌ Step-1 required elements missing!");
     return;
   }
 
-
   /* -----------------------------------------------------------
-     INTERNAL STATE (shared with inline SIC script)
+     INTERNAL STATE (SINGLE SOURCE OF TRUTH)
   ----------------------------------------------------------- */
-  let selectedCodes = {};
   let nameAvailable = false;
 
-  window.step1SelectedCodes = selectedCodes;
-
+  // IMPORTANT: global state for SIC codes
+  if (!window.step1SelectedCodes) {
+    window.step1SelectedCodes = {};
+  }
 
   /* -----------------------------------------------------------
      BUTTON CONTROL
@@ -50,17 +49,27 @@ function initStep1() {
     saveButton.style.opacity = "1";
   }
 
-
   /* -----------------------------------------------------------
-     VALIDATION
+     VALIDATION (ALWAYS READ FROM GLOBAL STATE)
   ----------------------------------------------------------- */
   function validateStep1() {
+
+    const selectedCodes = window.step1SelectedCodes || {};
 
     const okName = companyNameInput.value.trim() !== "";
     const okNameAvailable = nameAvailable === true;
     const okType = companyType.value !== "";
     const okJur = jurisdiction.value !== "";
     const okSic = Object.keys(selectedCodes).length > 0;
+
+    // Debug helper (remove later if you want)
+    console.log("✅ Step-1 validation:", {
+      okName,
+      okNameAvailable,
+      okType,
+      okJur,
+      okSic
+    });
 
     if (okName && okNameAvailable && okType && okJur && okSic) {
       enableSave();
@@ -69,13 +78,12 @@ function initStep1() {
     }
   }
 
-
   /* -----------------------------------------------------------
-     EVENT FROM NAME CHECKER
+     EVENT FROM NAME CHECKER (CRITICAL FIX)
   ----------------------------------------------------------- */
   document.addEventListener("companyNameChecked", function (e) {
 
-    nameAvailable = e.detail.available === true;
+    nameAvailable = e.detail && e.detail.available === true;
 
     if (!nameAvailable) {
       companyNameInput.value = "";
@@ -84,16 +92,20 @@ function initStep1() {
     validateStep1();
   });
 
-
   /* -----------------------------------------------------------
      EVENT FROM INLINE SIC SCRIPT
   ----------------------------------------------------------- */
   document.addEventListener("sicUpdated", function () {
-    selectedCodes = window.step1SelectedCodes;
     updateSelectedBox();
     validateStep1();
   });
 
+  /* -----------------------------------------------------------
+     TRIGGER VALIDATION ON INPUT CHANGES
+  ----------------------------------------------------------- */
+  companyType.addEventListener("change", validateStep1);
+  jurisdiction.addEventListener("change", validateStep1);
+  businessSelect.addEventListener("change", validateStep1);
 
   /* -----------------------------------------------------------
      RESTORE DATA FROM DB (ONLY ONE TRUE SOURCE)
@@ -104,7 +116,7 @@ function initStep1() {
 
     jQuery.post(ncuk_ajax.ajax_url, { action: "ncuk_load_step1" }, function (res) {
 
-      if (!res.success || !res.data) return;
+      if (!res || !res.success || !res.data) return;
 
       const d = res.data;
 
@@ -120,8 +132,7 @@ function initStep1() {
       if (d.business_activity) businessSelect.value = d.business_activity;
 
       if (d.sic_codes) {
-        selectedCodes = d.sic_codes;
-        window.step1SelectedCodes = selectedCodes;
+        window.step1SelectedCodes = d.sic_codes;
       }
 
       updateSelectedBox();
@@ -135,7 +146,6 @@ function initStep1() {
     });
   }
 
-
   /* -----------------------------------------------------------
      SAVE IN DB ONLY (NO LOCAL STORAGE)
   ----------------------------------------------------------- */
@@ -147,20 +157,20 @@ function initStep1() {
       company_type: companyType.value,
       jurisdiction: jurisdiction.value,
       business_activity: businessSelect.value,
-      sic_codes: selectedCodes
+      sic_codes: window.step1SelectedCodes || {}
     };
 
     jQuery.post(ncuk_ajax.ajax_url, payload, function (res) {
 
       console.log("💾 DB Save Response:", res);
 
-      if (res.success) {
+      if (res && res.success) {
 
         // Unlock step 2
         const step2 = document.querySelector('.step-item[data-step="2"]');
         if (step2) {
           step2.classList.remove("disabled");
-          step2.click(); // Go to step 2
+          step2.click();
         }
 
       } else {
@@ -169,11 +179,12 @@ function initStep1() {
     });
   });
 
-
   /* -----------------------------------------------------------
      RENDER SELECTED SIC CODES
   ----------------------------------------------------------- */
   function updateSelectedBox() {
+
+    const selectedCodes = window.step1SelectedCodes || {};
     selectedContainer.innerHTML = "";
 
     const entries = Object.entries(selectedCodes);

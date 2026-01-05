@@ -163,75 +163,75 @@ function ncuk_shortcode() {
 add_shortcode('company_name_checker', 'ncuk_shortcode');
 
 /* -------------------------------------------------------------
-   6. WIZARD SHORTCODE — NO AJAX (STATIC FORMS)
+   6. WIZARD SHORTCODE — WOO / WP-ADMIN STYLE (SAFE)
 ------------------------------------------------------------- */
 function ncuk_wrapper_shortcode() {
     ob_start(); ?>
 
-    <style>
-        .sub-tabs {
-            display:flex; gap:15px; margin:20px 0;
-            padding:0; list-style:none;
-        }
-        .step-item {
-            display:flex; gap:5px; align-items:center;
-            padding:12px 20px; border:2px solid #ccc;
-            border-radius:10px; cursor:pointer; transition:.3s;
-        }
-        .step-item .step-circle {
-            width:32px; height:32px; background:#ccc; color:white;
-            border-radius:50%; display:flex; justify-content:center; align-items:center;
-        }
-        .step-item.active { border-color:#4a3b8f; }
-        .step-item.active .step-circle { background:#E67000; }
-        .step-item.disabled { opacity:.4; pointer-events:none; }
+    <div class="wrap woocommerce company-formation-wrapper">
 
-        .step-item.completed { border-color:#28a745; }
-        .step-item.completed .step-circle {
-            background:#28a745; color:transparent; position:relative;
-        }
-        .step-item.completed .step-circle::before {
-            content:"✔"; color:white; font-size:16px; position:absolute;
-        }
+        <h1 class="wp-heading-inline">Company Formation</h1>
+        <p class="description">Complete your registration in simple steps</p>
 
-        .step-form { display:none; }
-        .step-form.active { display:block; }
-    </style>
+        <!-- Woo / WP Admin Tabs -->
+        <h2 class="nav-tab-wrapper" style="margin-top:20px;">
+            <a href="javascript:void(0);"
+               class="nav-tab step-item nav-tab-active"
+               data-step="1">
+                1. Particulars
+            </a>
 
-    <div class="company-formation-wrapper">
+            <a href="javascript:void(0);"
+               class="nav-tab step-item disabled"
+               data-step="2">
+                2. Addresses
+            </a>
 
-        <h2 class="main-tab-title">Company Formation</h2>
-        <p class="main-tab-subtitle">Complete your registration in simple steps</p>
+            <a href="javascript:void(0);"
+               class="nav-tab step-item disabled"
+               data-step="3">
+                3. Appointments
+            </a>
 
-        <ul class="sub-tabs">
-            <li class="step-item active" data-step="1"><span class="step-circle">1</span> Particulars</li>
-            <li class="step-item disabled" data-step="2"><span class="step-circle">2</span> Addresses</li>
-            <li class="step-item disabled" data-step="3"><span class="step-circle">3</span> Appointments</li>
-            <li class="step-item disabled" data-step="4"><span class="step-circle">4</span> Documents</li>
-        </ul>
+            <a href="javascript:void(0);"
+               class="nav-tab step-item disabled"
+               data-step="4">
+                4. Documents
+            </a>
+        </h2>
 
-        <div id="step1-name-checker">
+        <!-- Step 1 Name Checker -->
+        <div id="step1-name-checker" style="margin-top:20px;">
             <?php echo do_shortcode('[company_name_checker]'); ?>
         </div>
 
-        <div id="all-steps">
+        <!-- Steps -->
+        <div id="all-steps" style="margin-top:20px;">
+
+            <!-- STEP 1 -->
             <div id="step1" class="step-form active">
                 <?php ncuk_render_step_form(1); ?>
             </div>
-            <div id="step2" class="step-form">
+
+            <!-- FORCE HIDE (ADMIN SAFE) -->
+            <div id="step2" class="step-form" style="display:none;">
                 <?php ncuk_render_step_form(2); ?>
             </div>
-            <div id="step3" class="step-form">
+
+            <div id="step3" class="step-form" style="display:none;">
                 <?php ncuk_render_step_form(3); ?>
             </div>
-            <div id="step4" class="step-form">
+
+            <div id="step4" class="step-form" style="display:none;">
                 <?php ncuk_render_step_form(4); ?>
             </div>
+
         </div>
 
     </div>
 
 <script>
+/* ⚠️ JS LOGIC — 100% SAME */
 jQuery(document).ready(function($){
     $(".step-item").on("click", function(){
 
@@ -239,8 +239,8 @@ jQuery(document).ready(function($){
 
         const step = $(this).data("step");
 
-        $(".step-item").removeClass("active");
-        $(this).addClass("active");
+        $(".step-item").removeClass("nav-tab-active active");
+        $(this).addClass("nav-tab-active active");
 
         // Complete previous
         $(".step-item").each(function(){
@@ -250,8 +250,8 @@ jQuery(document).ready(function($){
         });
 
         // Show correct form
-        $(".step-form").removeClass("active");
-        $("#step"+step).addClass("active");
+        $(".step-form").removeClass("active").hide();
+        $("#step"+step).addClass("active").show();
 
         // Only Step1 shows name checker
         if(step == 1) $("#step1-name-checker").show();
@@ -259,6 +259,20 @@ jQuery(document).ready(function($){
     });
 });
 </script>
+
+<style>
+/* ===============================
+   ADMIN VISUAL TWEAKS ONLY
+=============================== */
+.company-formation-wrapper .step-item.disabled {
+    pointer-events:none;
+    opacity:0.5;
+}
+
+.company-formation-wrapper .step-item.completed {
+    color:#46b450;
+}
+</style>
 
     <?php return ob_get_clean();
 }
