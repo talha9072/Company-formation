@@ -216,7 +216,7 @@ function ncuk_wrapper_shortcode() {
 
         <div id="all-steps">
             <div id="step1" class="step-form active">
-                <?php ncuk_render_step_form(3); ?>
+                <?php ncuk_render_step_form(1); ?>
             </div>
             <div id="step2" class="step-form">
                 <?php ncuk_render_step_form(2); ?>
