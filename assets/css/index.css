@@ -121,20 +121,7 @@
   outline: none;
 }
 
-.step-form-wrapper button {
-  background-color: #4a3b8f;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 15px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
 
-.step-form-wrapper button:hover {
-  background-color: #372d74;
-}
 
 
 /*--------------------------------------------------------------

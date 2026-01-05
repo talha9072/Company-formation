@@ -18,101 +18,171 @@ wp_localize_script('form-step1-js', 'form1Data', [
 ?>
 
 <div class="step-form-wrapper">
-  <form id="step1form">
+  <form id="step1form" class="woocommerce">
 
     <!-- HIDDEN COMPANY NAME (auto-set by name checker) -->
     <input type="hidden" id="company_name" name="company_name" value="">
 
-    <div class="step-grid" style="display:flex;flex-wrap:wrap;gap:20px;">
+    <!-- ===================== -->
+    <!-- COMPANY DETAILS BOX -->
+    <!-- ===================== -->
+    <div class="postbox">
 
-      <!-- Company Type -->
-      <div class="form-group" style="flex:1 1 48%;">
-        <label for="company_type">Type of Company</label>
-        <select id="company_type" name="company_type" style="width:100%;">
-          <option value="">Select type</option>
-          <option value="Limited By Shares">Limited By Shares</option>
-          <option value="Limited By Guarantee">Limited By Guarantee</option>
-          <option value="LLP">LLP</option>
-          <option value="PLC">PLC</option>
-        </select>
-      </div>
+        <div class="postbox-header">
+            <h2 class="hndle">Company Details</h2>
+        </div>
 
-      <!-- Jurisdiction -->
-      <div class="form-group" style="flex:1 1 48%;">
-        <label for="jurisdiction">Jurisdiction</label>
-        <select id="jurisdiction" name="jurisdiction" style="width:100%;">
-          <option value="">Select jurisdiction</option>
-          <option value="England & Wales">England & Wales</option>
-          <option value="Scotland">Scotland</option>
-          <option value="Northern Ireland">Northern Ireland</option>
-        </select>
-      </div>
+        <div class="inside">
 
-      <!-- Business Activity -->
-      <div class="form-group" style="flex:1 1 48%;position:relative;">
-        <label for="business_activity">Business Activity</label>
+            <table class="form-table">
 
-        <select id="business_activity" name="business_activity"
-          style="width:100%;padding:8px;border:1px solid #ccc;">
-          <option value="">Select:</option>
-          <option value="All">All</option>
+                <!-- Company Type -->
+                <tr class="form-group">
+                    <th scope="row">
+                        <label for="company_type">Type of Company</label>
+                    </th>
+                    <td>
+                        <select id="company_type" name="company_type" class="regular-text">
+                            <option value="">Select type</option>
+                            <option value="Limited By Shares">Limited By Shares</option>
+                            <option value="Limited By Guarantee">Limited By Guarantee</option>
+                            <option value="LLP">LLP</option>
+                            <option value="PLC">PLC</option>
+                        </select>
+                    </td>
+                </tr>
 
-          <?php
-          $letters = range('A', 'U');
-          $labels = [
-            "Agriculture, Forestry and Fishing",
-            "Mining and Quarrying",
-            "Manufacturing",
-            "Electricity & Energy",
-            "Water supply and Waste",
-            "Construction",
-            "Wholesale & Retail",
-            "Transport & Storage",
-            "Accommodation & Food",
-            "Information & Communication",
-            "Financial Services",
-            "Real Estate",
-            "Professional Services",
-            "Admin & Support",
-            "Public Administration",
-            "Education",
-            "Health & Social Work",
-            "Arts & Entertainment",
-            "Other Services",
-            "Household Activities",
-            "Extraterritorial"
-          ];
+                <!-- Jurisdiction -->
+                <tr class="form-group">
+                    <th scope="row">
+                        <label for="jurisdiction">Jurisdiction</label>
+                    </th>
+                    <td>
+                        <select id="jurisdiction" name="jurisdiction" class="regular-text">
+                            <option value="">Select jurisdiction</option>
+                            <option value="England & Wales">England & Wales</option>
+                            <option value="Scotland">Scotland</option>
+                            <option value="Northern Ireland">Northern Ireland</option>
+                        </select>
+                    </td>
+                </tr>
 
-          foreach ($letters as $i => $l) {
-            echo "<option value='$l'>$l: {$labels[$i]}</option>";
-          }
-          ?>
-        </select>
+            </table>
 
-        <!-- Dropdown container -->
-        <div id="sic-category-container"
-          style="width:100%;border:1px solid #ccc;border-top:none;border-radius:0 0 6px 6px;
-                 max-height:260px;overflow-y:auto;display:none;background:#fff;position:absolute;
-                 top:100%;left:0;margin-top:-1px;z-index:50;"></div>
-      </div>
-
-      <!-- Selected SIC Codes -->
-      <div class="form-group" style="flex:1 1 48%;">
-        <label>Selected SIC Codes</label>
-        <div id="selected_sic_codes"
-          style="border:1px solid #ccc;border-radius:6px;padding:10px;
-                 min-height:45px;background:#f9f9f9;">None Selected</div>
-      </div>
-
+        </div>
     </div>
 
-    <div class="form-footer" style="display:flex;justify-content:flex-end;margin-top:20px;">
-      <button type="button" id="step1-save" class="button button-primary"
-        style="background:#4a3b8f;color:white;border:none;padding:10px 25px;border-radius:6px;cursor:pointer;">
-        Save & Continue
-      </button>
+    <!-- ===================== -->
+    <!-- BUSINESS ACTIVITY BOX -->
+    <!-- ===================== -->
+    <div class="postbox">
+
+        <div class="postbox-header">
+            <h2 class="hndle">Business Activity</h2>
+        </div>
+
+        <div class="inside">
+
+            <table class="form-table">
+
+                <!-- Business Activity -->
+                <tr class="form-group">
+                    <th scope="row">
+                        <label for="business_activity">Business Activity</label>
+                    </th>
+                    <td style="position:relative;">
+
+                        <select id="business_activity"
+                                name="business_activity"
+                                class="regular-text">
+                            <option value="">Select</option>
+                            <option value="All">All</option>
+
+                            <?php
+                            $letters = range('A', 'U');
+                            $labels = [
+                                "Agriculture, Forestry and Fishing",
+                                "Mining and Quarrying",
+                                "Manufacturing",
+                                "Electricity & Energy",
+                                "Water supply and Waste",
+                                "Construction",
+                                "Wholesale & Retail",
+                                "Transport & Storage",
+                                "Accommodation & Food",
+                                "Information & Communication",
+                                "Financial Services",
+                                "Real Estate",
+                                "Professional Services",
+                                "Admin & Support",
+                                "Public Administration",
+                                "Education",
+                                "Health & Social Work",
+                                "Arts & Entertainment",
+                                "Other Services",
+                                "Household Activities",
+                                "Extraterritorial"
+                            ];
+
+                            foreach ($letters as $i => $l) {
+                                echo "<option value='{$l}'>{$l}: {$labels[$i]}</option>";
+                            }
+                            ?>
+                        </select>
+
+                        <!-- SIC DROPDOWN (JS CONTROLLED) -->
+                        <div id="sic-category-container"
+                             style="
+                                width:100%;
+                                border:1px solid #ccd0d4;
+                                border-top:none;
+                                background:#fff;
+                                display:none;
+                                position:absolute;
+                                z-index:999;
+                             ">
+                        </div>
+
+                    </td>
+                </tr>
+
+                <!-- Selected SIC Codes -->
+                <tr class="form-group">
+                    <th scope="row">
+                        <label>Selected SIC Codes</label>
+                    </th>
+                    <td>
+                        <div id="selected_sic_codes"
+                             style="
+                                min-height:45px;
+                                background:#f6f7f7;
+                                border:1px solid #ccd0d4;
+                                padding:8px;
+                                border-radius:4px;
+                             ">
+                            None Selected
+                        </div>
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
     </div>
-  </form>
+
+    <!-- ===================== -->
+    <!-- FOOTER / ACTION -->
+    <!-- ===================== -->
+    <p class="submit" style="text-align:right;">
+        <button type="button"
+                id="step1-save"
+                class="button button-primary button-large">
+            Save & Continue
+        </button>
+    </p>
+
+</form>
+
 </div>
 
 
