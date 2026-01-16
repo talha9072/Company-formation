@@ -114,9 +114,4 @@
         The subscriber agrees their name is used to electronically authenticate the memorandum of association.
     </label>
 
-    <!-- CONTINUE -->
-    <button id="details-next-btn" class="step3-save-tab" style="margin-top:25px;">
-        Continue →
-    </button>
-
 </div>
