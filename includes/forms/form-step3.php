@@ -11,47 +11,110 @@ wp_enqueue_script(
 );
 ?>
 
-<div class="step-form-wrapper step3-wrapper">
+<div class="step-form-wrapper step3-wrapper woocommerce">
 
-    <h2 class="step-title">Appointments</h2>
+    <!-- ===================== -->
+    <!-- HEADER -->
+    <!-- ===================== -->
+    <div class="postbox">
 
-    <div class="step-description" style="background:#f5f7fb;border-radius:8px;padding:25px;margin-bottom:35px;">
-        <h3 style="font-size:28px;color:#4a3b8f;margin-bottom:10px;">Directors, Shareholders & Secretaries</h3>
-        <p style="color:#555;">A company must have at least one person director and one shareholder.</p>
+        <div class="postbox-header">
+            <h2 class="hndle">Appointments</h2>
+        </div>
+
+        <div class="inside">
+            <p class="description">
+                A company must have at least one <strong>person director</strong> and one
+                <strong>shareholder</strong>.
+            </p>
+        </div>
+
     </div>
 
-    <h3 style="font-size:24px;color:#4a3b8f;margin-bottom:15px;">Add Another Officer</h3>
+    <!-- ===================== -->
+    <!-- ADD OFFICERS -->
+    <!-- ===================== -->
+    <div class="postbox">
 
-    <div class="officer-btn-group" style="display:flex;gap:15px;margin-bottom:35px;">
-        <button class="officer-add-btn" data-target="#officer-person-form"
-            style="background:#ff8a26;color:white;padding:12px 25px;border:none;border-radius:6px;">👤 Add Person</button>
+        <div class="postbox-header">
+            <h2 class="hndle">Add Another Officer</h2>
+        </div>
 
-        <button class="officer-add-btn" data-target="#officer-corporate-form"
-            style="background:#ff8a26;color:white;padding:12px 25px;border:none;border-radius:6px;">🏢 Corporate</button>
+        <div class="inside">
 
-        <button class="officer-add-btn" data-target="#officer-entity-form"
-            style="background:#fff;color:#ff8a26;padding:12px 25px;border:2px solid #ff8a26;border-radius:6px;">⚖️ Other Legal Entity</button>
+            <p class="description" style="margin-bottom:15px;">
+                Choose the type of officer you want to appoint.
+            </p>
+
+            <div class="officer-btn-group" style="display:flex;gap:12px;flex-wrap:wrap;">
+
+                <button type="button"
+                        class="button button-primary officer-add-btn"
+                        data-target="#officer-person-form">
+                    👤 Add Person
+                </button>
+
+                <button type="button"
+                        class="button button-primary officer-add-btn"
+                        data-target="#officer-corporate-form">
+                    🏢 Corporate
+                </button>
+
+                <button type="button"
+                        class="button officer-add-btn"
+                        data-target="#officer-entity-form">
+                    ⚖️ Other Legal Entity
+                </button>
+
+            </div>
+
+        </div>
     </div>
 
-    <!-- ALL FORMS LOADED HERE BUT HIDDEN -->
+    <!-- ===================== -->
+    <!-- OFFICER FORMS (HIDDEN / JS CONTROLLED) -->
+    <!-- ===================== -->
     <?php include NCUK_PATH . "includes/forms/step3/officer-person.php"; ?>
     <?php include NCUK_PATH . "includes/forms/step3/officer-corporate.php"; ?>
     <?php include NCUK_PATH . "includes/forms/step3/officer-entity.php"; ?>
 
-    <!-- =======================
-     CURRENT APPOINTMENTS
-======================= -->
-<h3 style="font-size:24px;color:#4a3b8f;margin-bottom:15px;">Current Appointments</h3>
-<p style="color:#555;margin-bottom:20px;">
-    Below is a list of officers currently assigned to your company.
-</p>
+    <!-- ===================== -->
+    <!-- CURRENT APPOINTMENTS -->
+    <!-- ===================== -->
+    <div class="postbox">
 
-<div id="officer-list"></div>
+        <div class="postbox-header">
+            <h2 class="hndle">Current Appointments</h2>
+        </div>
 
-    <div style="margin-top:40px;text-align:right;">
-        <button id="step3-save" style="background:#1a8f4a;color:white;padding:12px 35px;border:none;border-radius:6px;">
+        <div class="inside">
+
+            <p class="description">
+                Below is a list of officers currently assigned to your company.
+            </p>
+
+            <div id="officer-list"
+                 style="
+                    margin-top:15px;
+                    background:#f6f7f7;
+                    border:1px solid #ccd0d4;
+                    padding:12px;
+                    border-radius:4px;
+                 ">
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- FOOTER ACTION -->
+    <!-- ===================== -->
+    <p class="submit" style="text-align:right;">
+        <button type="button"
+                id="step3-save"
+                class="button button-primary button-large">
             Save & Continue →
         </button>
-    </div>
+    </p>
 
 </div>

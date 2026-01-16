@@ -70,9 +70,7 @@
         /*--------------------------------------------------------------
 # Step Form Styling
 --------------------------------------------------------------*/
-#step-form {
-  margin-top: 25px;
-}
+
 
 /* Wrap the step form content in a visible container */
 .step-form-wrapper {
@@ -100,26 +98,7 @@
   margin-bottom: 8px;
 }
 
-/* FIXED — dot added → .step-form-wrapper */
-.step-form-wrapper input:not([type="checkbox"]):not([type="radio"]),
-.step-form-wrapper select,
-.step-form-wrapper textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 15px;
-    background: #fff;
-    box-sizing: border-box;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
 
-.step-form-wrapper input:focus,
-.step-form-wrapper select:focus,
-.step-form-wrapper textarea:focus {
-  border-color: #4a3b8f;
-  outline: none;
-}
 
 
 
