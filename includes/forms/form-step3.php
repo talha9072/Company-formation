@@ -17,54 +17,55 @@ wp_enqueue_script(
     <!-- HEADER -->
     <!-- ===================== -->
     <div class="postbox">
-
         <div class="postbox-header">
             <h2 class="hndle">Appointments</h2>
         </div>
-
         <div class="inside">
             <p class="description">
                 A company must have at least one <strong>person director</strong> and one
                 <strong>shareholder</strong>.
             </p>
         </div>
-
     </div>
 
     <!-- ===================== -->
-    <!-- ADD OFFICERS -->
+    <!-- OFFICER TYPE (RADIO) -->
     <!-- ===================== -->
     <div class="postbox">
 
         <div class="postbox-header">
-            <h2 class="hndle">Add Another Officer</h2>
+            <h2 class="hndle">Add Officer</h2>
         </div>
 
         <div class="inside">
 
-            <p class="description" style="margin-bottom:15px;">
-                Choose the type of officer you want to appoint.
+            <p class="description" style="margin-bottom:12px;">
+                Select the type of officer you want to appoint.
             </p>
 
-            <div class="officer-btn-group" style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div class="officer-type-group" style="display:flex;gap:20px;flex-wrap:wrap;">
 
-                <button type="button"
-                        class="button button-primary officer-add-btn"
-                        data-target="#officer-person-form">
-                    👤 Add Person
-                </button>
+                <label style="display:flex;align-items:center;gap:6px;">
+                    <input type="radio"
+                           name="officer_type"
+                           value="person"
+                           checked>
+                    👤 Person
+                </label>
 
-                <button type="button"
-                        class="button button-primary officer-add-btn"
-                        data-target="#officer-corporate-form">
+                <label style="display:flex;align-items:center;gap:6px;">
+                    <input type="radio"
+                           name="officer_type"
+                           value="corporate">
                     🏢 Corporate
-                </button>
+                </label>
 
-                <button type="button"
-                        class="button officer-add-btn"
-                        data-target="#officer-entity-form">
+                <label style="display:flex;align-items:center;gap:6px;">
+                    <input type="radio"
+                           name="officer_type"
+                           value="legalentity">
                     ⚖️ Other Legal Entity
-                </button>
+                </label>
 
             </div>
 
@@ -72,11 +73,12 @@ wp_enqueue_script(
     </div>
 
     <!-- ===================== -->
-    <!-- OFFICER FORMS (HIDDEN / JS CONTROLLED) -->
+    <!-- SINGLE OFFICER FORM -->
     <!-- ===================== -->
-    <?php include NCUK_PATH . "includes/forms/step3/officer-person.php"; ?>
-    <?php include NCUK_PATH . "includes/forms/step3/officer-corporate.php"; ?>
-    <?php include NCUK_PATH . "includes/forms/step3/officer-entity.php"; ?>
+    <?php
+    // SAME FORM for all officer types
+    include NCUK_PATH . "includes/forms/step3/officer-person.php";
+    ?>
 
     <!-- ===================== -->
     <!-- CURRENT APPOINTMENTS -->

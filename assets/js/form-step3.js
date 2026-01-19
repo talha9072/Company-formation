@@ -1,23 +1,62 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    console.log("🔥 Step-3 JS Loaded");
+    console.log("🔥 Step-3 JS Loaded (Fixed)");
 
-    const buttons = document.querySelectorAll(".officer-add-btn");
+    const officerForm = document.getElementById("officer-person-form");
+    if (!officerForm) return;
 
-    buttons.forEach(btn => {
-        btn.addEventListener("click", function () {
+    const radios = document.querySelectorAll('input[name="officer_type"]');
 
-            const target = this.dataset.target;
-            const form = document.querySelector(target);
+    /* ----------------------------------------------
+       ENSURE HIDDEN INPUT FOR TYPE
+    -----------------------------------------------*/
+    let hiddenTypeInput = officerForm.querySelector('input[name="officer_type_hidden"]');
+    if (!hiddenTypeInput) {
+        hiddenTypeInput = document.createElement("input");
+        hiddenTypeInput.type = "hidden";
+        hiddenTypeInput.name = "officer_type_hidden";
+        officerForm.appendChild(hiddenTypeInput);
+    }
 
-            // Hide all officer forms
-            document.querySelectorAll("#officer-person-form, #officer-corporate-form, #officer-entity-form")
-                .forEach(f => f.style.display = "none");
+    /* ----------------------------------------------
+       FUNCTION: SHOW FORM
+    -----------------------------------------------*/
+    function showOfficerForm(type) {
 
-            // Show selected form
-            form.style.display = "block";
+        // show form
+        officerForm.style.display = "block";
 
-            form.scrollIntoView({ behavior: "smooth" });
+        // set type
+        hiddenTypeInput.value = type;
+
+        console.log("👤 Officer type:", type);
+
+        // scroll to form
+        officerForm.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+
+    /* ----------------------------------------------
+       RADIO CHANGE HANDLER
+    -----------------------------------------------*/
+    radios.forEach(radio => {
+        radio.addEventListener("change", function () {
+
+            // reset old data
+            officerForm.reset?.();
+
+            showOfficerForm(this.value);
         });
     });
+
+    /* ----------------------------------------------
+       AUTO SHOW ON PAGE LOAD (DEFAULT RADIO)
+    -----------------------------------------------*/
+    const defaultRadio = document.querySelector('input[name="officer_type"]:checked');
+    if (defaultRadio) {
+        showOfficerForm(defaultRadio.value);
+    }
+
 });
