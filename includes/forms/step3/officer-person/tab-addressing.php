@@ -119,3 +119,26 @@
    
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const radios = document.querySelectorAll('input[name="service_addr_type"]');
+    const ownBox = document.getElementById("own-address-box");
+
+    if (!radios.length || !ownBox) return;
+
+    radios.forEach(radio => {
+        radio.addEventListener("change", function () {
+
+            if (this.value === "own") {
+                ownBox.style.display = "block";
+            } else {
+                ownBox.style.display = "none";
+            }
+
+        });
+    });
+
+});
+</script>
