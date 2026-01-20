@@ -210,7 +210,7 @@ function ncuk_wrapper_shortcode() {
 
             <!-- STEP 1 -->
             <div id="step1" class="step-form active">
-                <?php ncuk_render_step_form(3); ?>
+                <?php ncuk_render_step_form(1); ?>
             </div>
 
             <!-- FORCE HIDE (ADMIN SAFE) -->

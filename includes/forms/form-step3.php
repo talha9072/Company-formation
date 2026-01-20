@@ -1,14 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-/* Load Step-3 JS */
-wp_enqueue_script(
-  'form-step3-js',
-  NCUK_URL . 'assets/js/form-step3.js',
-  ['jquery'],
-  filemtime(NCUK_PATH . 'assets/js/form-step3.js'),
-  true
-);
+
 ?>
 
 <div class="step-form-wrapper step3-wrapper woocommerce">
