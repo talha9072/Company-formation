@@ -434,7 +434,12 @@ document.addEventListener("DOMContentLoaded", function () {
 const finalSaveBtn = document.getElementById("step3-save");
 
 if (finalSaveBtn) {
-    finalSaveBtn.addEventListener("click", function () {
+    // extra safety
+    finalSaveBtn.type = "button";
+
+    finalSaveBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
 
         const officers = getOfficers();
 
@@ -484,7 +489,22 @@ if (finalSaveBtn) {
             // ✅ SUCCESS
             localStorage.removeItem("ncuk_company_officers");
 
-            window.location.href = resp.data.next_url || window.location.href;
+            // ✅ OPEN STEP 4 VIA WIZARD (NO RELOAD)
+            const step4 = document.querySelector('.step-item[data-step="4"]');
+            if (step4) {
+                step4.classList.remove("disabled");
+
+                // 🔑 HARD BLOCK real navigation
+                step4.addEventListener("click", function (ev) {
+                    ev.preventDefault();
+                }, { once: true });
+
+                // trigger wizard logic only
+                step4.dispatchEvent(new MouseEvent("click", {
+                    bubbles: true,
+                    cancelable: true
+                }));
+            }
         })
         .catch(err => {
             console.error("STEP3 NETWORK ERROR:", err);
@@ -496,6 +516,7 @@ if (finalSaveBtn) {
         });
     });
 }
+
 
 
     // ── REAL SAVE ─────────────────────────────────────────────────────
@@ -541,6 +562,26 @@ if (finalSaveBtn) {
     renderList();
 
     console.log("✅ Full officer module initialized");
+
+
+    // ✅ Enable Step 4 in wizard (NO PAGE RELOAD)
+const step4 = document.querySelector('.step-item[data-step="4"]');
+if (step4) {
+    step4.classList.remove("disabled");
+
+    // 🔑 stop anchor navigation (page reload fix)
+    step4.removeAttribute("href");
+
+    // trigger wizard open safely
+    step4.dispatchEvent(new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true
+    }));
+}
+
+// cleanup
+localStorage.removeItem("ncuk_company_officers");
+
 });
 
 
