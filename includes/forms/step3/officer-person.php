@@ -24,3 +24,13 @@ wp_enqueue_script(
     filemtime(NCUK_PATH . 'assets/js/form-step3.js'),
     true
 );
+
+ // 🔑 MAKE NCUK_STEP3 AVAILABLE TO JS
+    wp_localize_script(
+        'form-step3-js',     // ⚠ MUST MATCH HANDLE ABOVE
+        'NCUK_STEP3',
+        [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce'    => wp_create_nonce('ncuk_step3_nonce')
+        ]
+    );

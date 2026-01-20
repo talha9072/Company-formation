@@ -428,6 +428,76 @@ document.addEventListener("DOMContentLoaded", function () {
         updateContinueButton();
     }
 
+    // ────────────────────────────────────────────────────────────────
+//  FINAL SUBMIT – SAVE ALL OFFICERS TO DB (Save & Continue)
+// ────────────────────────────────────────────────────────────────
+const finalSaveBtn = document.getElementById("step3-save");
+
+if (finalSaveBtn) {
+    finalSaveBtn.addEventListener("click", function () {
+
+        const officers = getOfficers();
+
+        if (!officers.length) {
+            alert("Please add at least one officer before continuing.");
+            return;
+        }
+
+        if (!checkMandatoryCompanyRoles()) {
+            alert("You must add at least:\n• One Person Director\n• One Shareholder");
+            return;
+        }
+
+        // prevent double click
+        if (finalSaveBtn.dataset.saving === "1") return;
+        finalSaveBtn.dataset.saving = "1";
+
+        finalSaveBtn.disabled = true;
+        finalSaveBtn.textContent = "Saving...";
+
+        // 🔑 WORDPRESS-COMPATIBLE PAYLOAD
+        const payload = new URLSearchParams({
+            action: "ncuk_save_step3_all_officers",
+            nonce: NCUK_STEP3.nonce,
+            officers: JSON.stringify(officers)
+        });
+
+        fetch(NCUK_STEP3.ajax_url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+            },
+            body: payload.toString()
+        })
+        .then(r => r.json())
+        .then(resp => {
+            if (!resp.success) {
+                console.error("STEP3 AJAX ERROR:", resp);
+                alert("Failed to save officers:\n" + (resp.data?.msg || "Unknown error"));
+
+                finalSaveBtn.disabled = false;
+                finalSaveBtn.textContent = "Save & Continue →";
+                finalSaveBtn.dataset.saving = "0";
+                return;
+            }
+
+            // ✅ SUCCESS
+            localStorage.removeItem("ncuk_company_officers");
+
+            window.location.href = resp.data.next_url || window.location.href;
+        })
+        .catch(err => {
+            console.error("STEP3 NETWORK ERROR:", err);
+            alert("Network error while saving officers.");
+
+            finalSaveBtn.disabled = false;
+            finalSaveBtn.textContent = "Save & Continue →";
+            finalSaveBtn.dataset.saving = "0";
+        });
+    });
+}
+
+
     // ── REAL SAVE ─────────────────────────────────────────────────────
     function handleSave() {
         const data = collectOfficerData();
@@ -472,3 +542,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
     console.log("✅ Full officer module initialized");
 });
+
+
