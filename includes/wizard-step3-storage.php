@@ -125,11 +125,23 @@ function ncuk_save_step3_all_officers() {
     'share_currency'    => sanitize_text_field($o['shares']['currency'] ?? null),
     'share_particulars' => sanitize_text_field($o['shares']['particulars'] ?? null),
 
-    // PSC
-    'psc_company_shares'    => sanitize_text_field($o['noc']['company_shares'] ?? 'na'),
-    'psc_company_voting'    => sanitize_text_field($o['noc']['company_voting'] ?? 'na'),
-    'psc_company_directors' => intval($o['noc']['company_directors'] ?? 0),
-    'psc_company_other'     => intval($o['noc']['company_other'] ?? 0),
+    // PSC — COMPANY
+'psc_company_shares'    => sanitize_text_field($o['noc']['company_shares'] ?? 'na'),
+'psc_company_voting'    => sanitize_text_field($o['noc']['company_voting'] ?? 'na'),
+'psc_company_directors' => intval($o['noc']['company_directors'] ?? 0),
+'psc_company_other'     => intval($o['noc']['company_other'] ?? 0),
+
+// PSC — FIRM
+'psc_firm_shares'       => sanitize_text_field($o['noc']['firm_shares'] ?? 'na'),
+'psc_firm_voting'       => sanitize_text_field($o['noc']['firm_voting'] ?? 'na'),
+'psc_firm_directors'    => intval($o['noc']['firm_directors'] ?? 0),
+'psc_firm_other'        => intval($o['noc']['firm_other'] ?? 0),
+
+// PSC — TRUST
+'psc_trust_shares'      => sanitize_text_field($o['noc']['trust_shares'] ?? 'na'),
+'psc_trust_voting'      => sanitize_text_field($o['noc']['trust_voting'] ?? 'na'),
+'psc_trust_directors'   => intval($o['noc']['trust_directors'] ?? 0),
+'psc_trust_other'       => intval($o['noc']['trust_other'] ?? 0),
 
     // META
     'created_at' => current_time('mysql')

@@ -346,15 +346,58 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ── PSC (COMPANY) ─────────────────
     noc: {
-      company_shares:
-        officerForm.querySelector('[name="psc_company_shares"]')?.value || "na",
-      company_voting:
-        officerForm.querySelector('[name="psc_company_voting"]')?.value || "na",
-      company_directors:
-        officerForm.querySelector('[name="psc_company_directors"]')?.value || "0",
-      company_other:
-        officerForm.querySelector('[name="psc_company_other"]')?.value || "0"
-    }
+  // ── COMPANY (always present)
+  company_shares:
+    officerForm.querySelector('[name="psc_company_shares"]')?.value || "na",
+  company_voting:
+    officerForm.querySelector('[name="psc_company_voting"]')?.value || "na",
+  company_directors:
+    officerForm.querySelector('[name="psc_company_directors"]')?.value || "0",
+  company_other:
+    officerForm.querySelector('[name="psc_company_other"]')?.value || "0",
+
+  // ── FIRM (only if Yes)
+  firm_shares:
+    document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
+      ? officerForm.querySelector('[name="psc_firm_shares"]')?.value || "na"
+      : "na",
+
+  firm_voting:
+    document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
+      ? officerForm.querySelector('[name="psc_firm_voting"]')?.value || "na"
+      : "na",
+
+  firm_directors:
+    document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
+      ? officerForm.querySelector('[name="psc_firm_directors"]')?.value || "0"
+      : "0",
+
+  firm_other:
+    document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
+      ? officerForm.querySelector('[name="psc_firm_other"]')?.value || "0"
+      : "0",
+
+  // ── TRUST (only if Yes)
+  trust_shares:
+    document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
+      ? officerForm.querySelector('[name="psc_trust_shares"]')?.value || "na"
+      : "na",
+
+  trust_voting:
+    document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
+      ? officerForm.querySelector('[name="psc_trust_voting"]')?.value || "na"
+      : "na",
+
+  trust_directors:
+    document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
+      ? officerForm.querySelector('[name="psc_trust_directors"]')?.value || "0"
+      : "0",
+
+  trust_other:
+    document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
+      ? officerForm.querySelector('[name="psc_trust_other"]')?.value || "0"
+      : "0"
+}
   };
 }
 
