@@ -293,42 +293,70 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function collectOfficerData() {
-        return {
-            id: Date.now().toString(),
-            officer_type: getOfficerType(),
+  return {
+    id: Date.now().toString(),
+    officer_type: getOfficerType(),
 
-            roles: {
-                director:   !!roleDirector?.checked,
-                shareholder: !!roleShareholder?.checked,
-                secretary:  !!roleSecretary?.checked,
-                psc:        !!rolePSC?.checked
-            },
+    // ── ROLES ─────────────────────────
+    roles: {
+      director: !!roleDirector?.checked,
+      shareholder: !!roleShareholder?.checked,
+      secretary: !!roleSecretary?.checked,
+      psc: !!rolePSC?.checked
+    },
 
-            first:   officerForm.querySelector("#det_first")?.value.trim()   || "",
-            last:    officerForm.querySelector("#det_last")?.value.trim()    || "",
-            email:   officerForm.querySelector("#det_email")?.value.trim()   || "",
-            dob:     collectDob(),
-            consent: !!officerForm.querySelector("#consent_auth")?.checked,
+    // ── PERSONAL ─────────────────────
+    title: officerForm.querySelector("#det_title")?.value.trim() || "",
+    first: officerForm.querySelector("#det_first")?.value.trim() || "",
+    last: officerForm.querySelector("#det_last")?.value.trim() || "",
+    email: officerForm.querySelector("#det_email")?.value.trim() || "",
+    dob: collectDob(),
+    nationality: officerForm.querySelector("#det_nationality")?.value.trim() || "",
+    consent: !!officerForm.querySelector("#consent_auth")?.checked,
 
-            residential: {
-                line1:    officerForm.querySelector("#addr_line1")?.value.trim()    || "",
-                town:     officerForm.querySelector("#addr_town")?.value.trim()     || "",
-                postcode: officerForm.querySelector("#addr_postcode")?.value.trim() || ""
-            },
+    // ── RESIDENTIAL ADDRESS ───────────
+    residential: {
+      line1: officerForm.querySelector("#addr_line1")?.value.trim() || "",
+      line2: officerForm.querySelector("#addr_line2")?.value.trim() || "",
+      line3: officerForm.querySelector("#addr_line3")?.value.trim() || "",
+      town: officerForm.querySelector("#addr_town")?.value.trim() || "",
+      country: officerForm.querySelector("#addr_country")?.value.trim() || "",
+      postcode: officerForm.querySelector("#addr_postcode")?.value.trim() || ""
+    },
 
-            shares: {
-                quantity: officerForm.querySelector("#share_quantity")?.value.trim() || ""
-            },
+    // ── SERVICE ADDRESS ───────────────
+    service: {
+      type: officerForm.querySelector('input[name="service_addr_type"]:checked')?.value || "",
+      line1: officerForm.querySelector("#service_line1")?.value.trim() || "",
+      line2: officerForm.querySelector("#service_line2")?.value.trim() || "",
+      line3: officerForm.querySelector("#service_line3")?.value.trim() || "",
+      town: officerForm.querySelector("#service_town")?.value.trim() || "",
+      country: officerForm.querySelector("#service_country")?.value.trim() || "",
+      postcode: officerForm.querySelector("#service_postcode")?.value.trim() || ""
+    },
 
-            noc: {
-                company_shares:    officerForm.querySelector('[name="psc_company_shares"]')?.value    || "na",
-                company_voting:    officerForm.querySelector('[name="psc_company_voting"]')?.value    || "na",
-                company_directors: officerForm.querySelector('[name="psc_company_directors"]')?.value || "0",
-                company_other:     officerForm.querySelector('[name="psc_company_other"]')?.value     || "0"
-                // Add psc_firm_*/psc_trust_* if you want to save them too
-            }
-        };
+    // ── SHARES ────────────────────────
+    shares: {
+      class: officerForm.querySelector("#share_class")?.value.trim() || "",
+      quantity: officerForm.querySelector("#share_quantity")?.value.trim() || "",
+      price: officerForm.querySelector("#share_price")?.value.trim() || "",
+       currency: "GBP", // 🔒 fixed currency
+      particulars: officerForm.querySelector("#share_particulars")?.value.trim() || ""
+    },
+
+    // ── PSC (COMPANY) ─────────────────
+    noc: {
+      company_shares:
+        officerForm.querySelector('[name="psc_company_shares"]')?.value || "na",
+      company_voting:
+        officerForm.querySelector('[name="psc_company_voting"]')?.value || "na",
+      company_directors:
+        officerForm.querySelector('[name="psc_company_directors"]')?.value || "0",
+      company_other:
+        officerForm.querySelector('[name="psc_company_other"]')?.value || "0"
     }
+  };
+}
 
     function validateOfficer(data) {
         const errors = [];
