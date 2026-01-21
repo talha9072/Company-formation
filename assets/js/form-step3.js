@@ -554,6 +554,7 @@ if (finalSaveBtn) {
                 finalSaveBtn.disabled = false;
                 finalSaveBtn.textContent = "Save & Continue →";
                 finalSaveBtn.dataset.saving = "0";
+
                 return;
             }
 
@@ -632,26 +633,10 @@ if (finalSaveBtn) {
     // Initial render
     renderList();
 
-    console.log("✅ Full officer module initialized");
+    
 
 
-    // ✅ Enable Step 4 in wizard (NO PAGE RELOAD)
-const step4 = document.querySelector('.step-item[data-step="4"]');
-if (step4) {
-    step4.classList.remove("disabled");
-
-    // 🔑 stop anchor navigation (page reload fix)
-    step4.removeAttribute("href");
-
-    // trigger wizard open safely
-    step4.dispatchEvent(new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true
-    }));
-}
-
-// cleanup
-localStorage.removeItem("ncuk_company_officers");
+   
 
 });
 
