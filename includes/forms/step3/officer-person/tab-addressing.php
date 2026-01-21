@@ -22,52 +22,100 @@
 
     <div id="service-address-options">
 
-        <!-- Cambridge -->
-        <div class="addr-option" data-value="cambridge">
-            <div class="addr-header">
-                <input type="radio" name="service_addr_type" value="cambridge">
-                <span>Cambridge Directors Service Address</span>
-            </div>
-            <p class="addr-desc">
-                Use of our Cambridge address as your service address for up to 2 officers, for 1 year.
-            </p>
-        </div>
+        <label class="addr-option">
+            <input type="radio" name="service_addr_type" value="cambridge">
+            <strong>Cambridge Directors Service Address</strong>
+        </label>
 
-        <!-- London -->
-        <div class="addr-option" data-value="london">
-            <div class="addr-header">
-                <input type="radio" name="service_addr_type" value="london">
-                <span>London Directors Service Address</span>
-            </div>
-            <p class="addr-desc">
-                Use of our London address as your service address for up to 2 officers, for 1 year.
-            </p>
-        </div>
+        <label class="addr-option">
+            <input type="radio" name="service_addr_type" value="london">
+            <strong>London Directors Service Address</strong>
+        </label>
 
-        <!-- Own -->
-        <div class="addr-option" data-value="own">
-            <div class="addr-header">
-                <input type="radio" name="service_addr_type" value="own">
-                <span>Use Your Own Address</span>
-            </div>
-            <p class="addr-desc">
-                Provide your residential service address manually.
-            </p>
-        </div>
+        <label class="addr-option">
+            <input type="radio" name="service_addr_type" value="own">
+            <strong>Use Your Own Address</strong>
+        </label>
 
     </div>
 
     <!-- ===================== -->
-    <!-- OWN ADDRESS BOX -->
+    <!-- CAMBRIDGE -->
     <!-- ===================== -->
-    <div id="own-address-box" style="display:none;margin-top:25px;">
+    <div id="cambridge-address-box" class="service-box" style="display:none;margin-top:25px;">
+        <h3 style="color:#4a3b8f;">Cambridge Service Address</h3>
 
+        <div class="step3-grid">
+            <div class="grid-item">
+                <label>Address</label>
+                <input type="text" class="widefat" placeholder="St Johns Innovation Centre">
+            </div>
+
+            <div class="grid-item">
+                <label>Street</label>
+                <input type="text" class="widefat" placeholder="Cowley Road">
+            </div>
+
+            <div class="grid-item">
+                <label>Town</label>
+                <input type="text" class="widefat" placeholder="Cambridge">
+            </div>
+
+            <div class="grid-item">
+                <label>Postcode</label>
+                <input type="text" class="widefat" placeholder="CB4 0WS">
+            </div>
+
+            <div class="grid-item">
+                <label>Country</label>
+                <input type="text" class="widefat" placeholder="UNITED KINGDOM">
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- LONDON -->
+    <!-- ===================== -->
+    <div id="london-address-box" class="service-box" style="display:none;margin-top:25px;">
+        <h3 style="color:#4a3b8f;">London Service Address</h3>
+
+        <div class="step3-grid">
+            <div class="grid-item">
+                <label>Address</label>
+                <input type="text" class="widefat" placeholder="Kemp House">
+            </div>
+
+            <div class="grid-item">
+                <label>Street</label>
+                <input type="text" class="widefat" placeholder="152–160 City Road">
+            </div>
+
+            <div class="grid-item">
+                <label>Town</label>
+                <input type="text" class="widefat" placeholder="London">
+            </div>
+
+            <div class="grid-item">
+                <label>Postcode</label>
+                <input type="text" class="widefat" placeholder="EC1V 2NX">
+            </div>
+
+            <div class="grid-item">
+                <label>Country</label>
+                <input type="text" class="widefat" placeholder="UNITED KINGDOM">
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- OWN ADDRESS -->
+    <!-- ===================== -->
+    <div id="own-address-box" class="service-box" style="display:none;margin-top:25px;">
         <h3 style="color:#4a3b8f;">Your Residential Address</h3>
 
         <div class="step3-grid">
-
             <div class="grid-item">
-                <label>Name/Number *</label>
+                <label>Name / Number *</label>
                 <input type="text" id="own_name_number" class="widefat">
             </div>
 
@@ -112,31 +160,36 @@
                 <label>Postal Code *</label>
                 <input type="text" id="own_postcode" class="widefat">
             </div>
-
         </div>
     </div>
 
-   
-
 </div>
 
+<!-- ===================== -->
+<!-- JS TO TOGGLE ADDRESS FORMS -->
+<!-- ===================== -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
     const radios = document.querySelectorAll('input[name="service_addr_type"]');
-    const ownBox = document.getElementById("own-address-box");
 
-    if (!radios.length || !ownBox) return;
+    const boxes = {
+        cambridge: document.getElementById("cambridge-address-box"),
+        london: document.getElementById("london-address-box"),
+        own: document.getElementById("own-address-box")
+    };
+
+    function hideAll() {
+        Object.values(boxes).forEach(box => {
+            if (box) box.style.display = "none";
+        });
+    }
 
     radios.forEach(radio => {
         radio.addEventListener("change", function () {
-
-            if (this.value === "own") {
-                ownBox.style.display = "block";
-            } else {
-                ownBox.style.display = "none";
-            }
-
+            hideAll();
+            const box = boxes[this.value];
+            if (box) box.style.display = "block";
         });
     });
 
