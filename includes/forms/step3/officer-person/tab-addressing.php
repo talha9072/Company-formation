@@ -43,69 +43,79 @@
     <!-- CAMBRIDGE -->
     <!-- ===================== -->
     <div id="cambridge-address-box" class="service-box" style="display:none;margin-top:25px;">
-        <h3 style="color:#4a3b8f;">Cambridge Service Address</h3>
+    <h3 style="color:#4a3b8f;">Cambridge Service Address</h3>
 
-        <div class="step3-grid">
-            <div class="grid-item">
-                <label>Address</label>
-                <input type="text" class="widefat" placeholder="St Johns Innovation Centre">
-            </div>
+    <div class="step3-grid">
+        <div class="grid-item">
+            <label>Address</label>
+            <input type="text" id="cambridge_address" class="widefat"
+                   value="St Johns Innovation Centre">
+        </div>
 
-            <div class="grid-item">
-                <label>Street</label>
-                <input type="text" class="widefat" placeholder="Cowley Road">
-            </div>
+        <div class="grid-item">
+            <label>Street</label>
+            <input type="text" id="cambridge_street" class="widefat"
+                   value="Cowley Road">
+        </div>
 
-            <div class="grid-item">
-                <label>Town</label>
-                <input type="text" class="widefat" placeholder="Cambridge">
-            </div>
+        <div class="grid-item">
+            <label>Town</label>
+            <input type="text" id="cambridge_town" class="widefat"
+                   value="Cambridge">
+        </div>
 
-            <div class="grid-item">
-                <label>Postcode</label>
-                <input type="text" class="widefat" placeholder="CB4 0WS">
-            </div>
+        <div class="grid-item">
+            <label>Postcode</label>
+            <input type="text" id="cambridge_postcode" class="widefat"
+                   value="CB4 0WS">
+        </div>
 
-            <div class="grid-item">
-                <label>Country</label>
-                <input type="text" class="widefat" placeholder="UNITED KINGDOM">
-            </div>
+        <div class="grid-item">
+            <label>Country</label>
+            <input type="text" id="cambridge_country" class="widefat"
+                   value="UNITED KINGDOM">
         </div>
     </div>
+</div>
 
     <!-- ===================== -->
     <!-- LONDON -->
     <!-- ===================== -->
     <div id="london-address-box" class="service-box" style="display:none;margin-top:25px;">
-        <h3 style="color:#4a3b8f;">London Service Address</h3>
+    <h3 style="color:#4a3b8f;">London Service Address</h3>
 
-        <div class="step3-grid">
-            <div class="grid-item">
-                <label>Address</label>
-                <input type="text" class="widefat" placeholder="Kemp House">
-            </div>
+    <div class="step3-grid">
+        <div class="grid-item">
+            <label>Address</label>
+            <input type="text" id="london_address" class="widefat"
+                   value="Kemp House">
+        </div>
 
-            <div class="grid-item">
-                <label>Street</label>
-                <input type="text" class="widefat" placeholder="152–160 City Road">
-            </div>
+        <div class="grid-item">
+            <label>Street</label>
+            <input type="text" id="london_street" class="widefat"
+                   value="152–160 City Road">
+        </div>
 
-            <div class="grid-item">
-                <label>Town</label>
-                <input type="text" class="widefat" placeholder="London">
-            </div>
+        <div class="grid-item">
+            <label>Town</label>
+            <input type="text" id="london_town" class="widefat"
+                   value="London">
+        </div>
 
-            <div class="grid-item">
-                <label>Postcode</label>
-                <input type="text" class="widefat" placeholder="EC1V 2NX">
-            </div>
+        <div class="grid-item">
+            <label>Postcode</label>
+            <input type="text" id="london_postcode" class="widefat"
+                   value="EC1V 2NX">
+        </div>
 
-            <div class="grid-item">
-                <label>Country</label>
-                <input type="text" class="widefat" placeholder="UNITED KINGDOM">
-            </div>
+        <div class="grid-item">
+            <label>Country</label>
+            <input type="text" id="london_country" class="widefat"
+                   value="UNITED KINGDOM">
         </div>
     </div>
+</div>
 
     <!-- ===================== -->
     <!-- OWN ADDRESS -->

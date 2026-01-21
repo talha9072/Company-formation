@@ -626,31 +626,79 @@ if (finalSaveBtn) {
 }
 
 
+function resetOfficerFormUI() {
 
+    // 1️⃣ Reset entire form fields
+    officerForm.reset?.();
+
+    // 2️⃣ Reset officer type to default
+    if (defaultRadio) {
+        defaultRadio.checked = true;
+        hiddenTypeInput.value = defaultRadio.value;
+    }
+
+    // 3️⃣ Clear ALL text inputs manually (safety for readonly/defaults)
+    officerForm.querySelectorAll("input[type='text'], input[type='email'], input[type='number']").forEach(i => {
+        i.value = "";
+    });
+
+    // 4️⃣ Clear selects (except country default if needed)
+    officerForm.querySelectorAll("select").forEach(s => {
+        if (s.dataset.keep !== "1") {
+            s.selectedIndex = 0;
+        }
+    });
+
+    // 5️⃣ Clear checkboxes
+    officerForm.querySelectorAll("input[type='checkbox']").forEach(c => {
+        c.checked = false;
+    });
+
+    // 6️⃣ Clear service address radios
+    document.querySelectorAll('input[name="service_addr_type"]').forEach(r => {
+        r.checked = false;
+    });
+
+    // 7️⃣ Hide all service address boxes
+    ["cambridge", "london", "own"].forEach(k => {
+        const box = document.getElementById(`${k}-address-box`);
+        if (box) box.style.display = "none";
+    });
+
+    // 8️⃣ Hide conditional sections
+    document.getElementById("psc-firm-section")?.style.setProperty("display", "none");
+    document.getElementById("psc-trust-section")?.style.setProperty("display", "none");
+    document.getElementById("consent-box")?.style.setProperty("display", "none");
+
+    // 9️⃣ Reset role logic + tabs
+    refreshRoleLogic();
+    switchTab("#tab-pos");
+
+    // 🔟 Scroll user back to top of form
+    officerForm.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    console.log("✅ Officer form UI fully reset");
+}
     // ── REAL SAVE ─────────────────────────────────────────────────────
     function handleSave() {
-        const data = collectOfficerData();
-        const errors = validateOfficer(data);
+    const data = collectOfficerData();
+    const errors = validateOfficer(data);
 
-        if (errors.length > 0) {
-            alert("Cannot save officer:\n\n• " + errors.join("\n• "));
-            console.table(errors);
-            return;
-        }
-
-        const officers = getOfficers();
-        officers.push(data);
-        setOfficers(officers);
-
-        alert("Officer saved successfully!");
-        renderList();
-
-        // Reset & go back to start
-        officerForm.reset?.();
-        if (defaultRadio) defaultRadio.checked = true;
-        showOfficerForm(defaultRadio?.value || "");
-        switchTab("#tab-pos");
+    if (errors.length > 0) {
+        alert("Cannot save officer:\n\n• " + errors.join("\n• "));
+        return;
     }
+
+    const officers = getOfficers();
+    officers.push(data);
+    setOfficers(officers);
+
+    alert("Officer saved successfully!");
+    renderList();
+
+    // 🔥 FULL UI RESET (NO STORAGE TOUCH)
+    resetOfficerFormUI();
+}
 
     // Attach save listener
     function tryAttachSaveListener() {
