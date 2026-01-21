@@ -547,35 +547,33 @@ if (finalSaveBtn) {
         })
         .then(r => r.json())
         .then(resp => {
-            if (!resp.success) {
+            if (!resp || !resp.success) {
                 console.error("STEP3 AJAX ERROR:", resp);
-                alert("Failed to save officers:\n" + (resp.data?.msg || "Unknown error"));
+                alert("Failed to save officers:\n" + (resp?.data?.msg || "Unknown error"));
 
+                // 🔁 RESET BUTTON ON FAILURE
                 finalSaveBtn.disabled = false;
                 finalSaveBtn.textContent = "Save & Continue →";
                 finalSaveBtn.dataset.saving = "0";
-
                 return;
             }
 
-            // ✅ SUCCESS
-            localStorage.removeItem("ncuk_company_officers");
+            
 
-            // ✅ OPEN STEP 4 VIA WIZARD (NO RELOAD)
+            // 🔁 ALLOW FURTHER EDITS (NO FREEZE)
+            renderList();
+            updateContinueButton();
+
+            // 🔁 RESET SAVE BUTTON (CRITICAL FIX)
+            finalSaveBtn.disabled = false;
+            finalSaveBtn.textContent = "Save & Continue →";
+            finalSaveBtn.dataset.saving = "0";
+
+            // ✅ ENABLE & MOVE TO STEP 4 (SAFE)
             const step4 = document.querySelector('.step-item[data-step="4"]');
             if (step4) {
                 step4.classList.remove("disabled");
-
-                // 🔑 HARD BLOCK real navigation
-                step4.addEventListener("click", function (ev) {
-                    ev.preventDefault();
-                }, { once: true });
-
-                // trigger wizard logic only
-                step4.dispatchEvent(new MouseEvent("click", {
-                    bubbles: true,
-                    cancelable: true
-                }));
+                step4.click(); // ✅ REAL CLICK ONLY
             }
         })
         .catch(err => {
