@@ -292,7 +292,53 @@ document.addEventListener("DOMContentLoaded", function () {
         return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
     }
 
-    function collectOfficerData() {
+    function collectServiceAddress() {
+    const type =
+        document.querySelector('input[name="service_addr_type"]:checked')?.value || "";
+
+    // ── OWN ADDRESS ─────────────────────────
+    if (type === "own") {
+        return {
+            type,
+            line1: document.getElementById("own_name_number")?.value.trim() || "",
+            line2: document.getElementById("own_street")?.value.trim() || "",
+            line3: document.getElementById("own_line2")?.value.trim() || "",
+            town: document.getElementById("own_town")?.value.trim() || "",
+            country: document.getElementById("own_country")?.value.trim() || "",
+            postcode: document.getElementById("own_postcode")?.value.trim() || ""
+        };
+    }
+
+    // ── CAMBRIDGE ADDRESS ───────────────────
+    if (type === "cambridge") {
+        return {
+            type,
+            line1: document.getElementById("cambridge_address")?.value.trim() || "",
+            line2: document.getElementById("cambridge_street")?.value.trim() || "",
+            line3: "",
+            town: document.getElementById("cambridge_town")?.value.trim() || "",
+            country: document.getElementById("cambridge_country")?.value.trim() || "",
+            postcode: document.getElementById("cambridge_postcode")?.value.trim() || ""
+        };
+    }
+
+    // ── LONDON ADDRESS ──────────────────────
+    if (type === "london") {
+        return {
+            type,
+            line1: document.getElementById("london_address")?.value.trim() || "",
+            line2: document.getElementById("london_street")?.value.trim() || "",
+            line3: "",
+            town: document.getElementById("london_town")?.value.trim() || "",
+            country: document.getElementById("london_country")?.value.trim() || "",
+            postcode: document.getElementById("london_postcode")?.value.trim() || ""
+        };
+    }
+
+    return { type };
+}
+
+function collectOfficerData() {
   return {
     id: Date.now().toString(),
     officer_type: getOfficerType(),
@@ -324,82 +370,74 @@ document.addEventListener("DOMContentLoaded", function () {
       postcode: officerForm.querySelector("#addr_postcode")?.value.trim() || ""
     },
 
-    // ── SERVICE ADDRESS ───────────────
-    service: {
-      type: officerForm.querySelector('input[name="service_addr_type"]:checked')?.value || "",
-      line1: officerForm.querySelector("#service_line1")?.value.trim() || "",
-      line2: officerForm.querySelector("#service_line2")?.value.trim() || "",
-      line3: officerForm.querySelector("#service_line3")?.value.trim() || "",
-      town: officerForm.querySelector("#service_town")?.value.trim() || "",
-      country: officerForm.querySelector("#service_country")?.value.trim() || "",
-      postcode: officerForm.querySelector("#service_postcode")?.value.trim() || ""
-    },
+    // ── SERVICE ADDRESS (🔥 FIXED) ─────
+    service: collectServiceAddress(),
 
     // ── SHARES ────────────────────────
     shares: {
       class: officerForm.querySelector("#share_class")?.value.trim() || "",
       quantity: officerForm.querySelector("#share_quantity")?.value.trim() || "",
       price: officerForm.querySelector("#share_price")?.value.trim() || "",
-       currency: "GBP", // 🔒 fixed currency
+      currency: "GBP",
       particulars: officerForm.querySelector("#share_particulars")?.value.trim() || ""
     },
 
     // ── PSC (COMPANY) ─────────────────
     noc: {
-  // ── COMPANY (always present)
-  company_shares:
-    officerForm.querySelector('[name="psc_company_shares"]')?.value || "na",
-  company_voting:
-    officerForm.querySelector('[name="psc_company_voting"]')?.value || "na",
-  company_directors:
-    officerForm.querySelector('[name="psc_company_directors"]')?.value || "0",
-  company_other:
-    officerForm.querySelector('[name="psc_company_other"]')?.value || "0",
+      company_shares:
+        officerForm.querySelector('[name="psc_company_shares"]')?.value || "na",
+      company_voting:
+        officerForm.querySelector('[name="psc_company_voting"]')?.value || "na",
+      company_directors:
+        officerForm.querySelector('[name="psc_company_directors"]')?.value || "0",
+      company_other:
+        officerForm.querySelector('[name="psc_company_other"]')?.value || "0",
 
-  // ── FIRM (only if Yes)
-  firm_shares:
-    document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
-      ? officerForm.querySelector('[name="psc_firm_shares"]')?.value || "na"
-      : "na",
+      // ── FIRM ────────────────────────
+      firm_shares:
+        document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
+          ? officerForm.querySelector('[name="psc_firm_shares"]')?.value || "na"
+          : "na",
 
-  firm_voting:
-    document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
-      ? officerForm.querySelector('[name="psc_firm_voting"]')?.value || "na"
-      : "na",
+      firm_voting:
+        document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
+          ? officerForm.querySelector('[name="psc_firm_voting"]')?.value || "na"
+          : "na",
 
-  firm_directors:
-    document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
-      ? officerForm.querySelector('[name="psc_firm_directors"]')?.value || "0"
-      : "0",
+      firm_directors:
+        document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
+          ? officerForm.querySelector('[name="psc_firm_directors"]')?.value || "0"
+          : "0",
 
-  firm_other:
-    document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
-      ? officerForm.querySelector('[name="psc_firm_other"]')?.value || "0"
-      : "0",
+      firm_other:
+        document.querySelector('input[name="psc_as_firm"]:checked')?.value === "1"
+          ? officerForm.querySelector('[name="psc_firm_other"]')?.value || "0"
+          : "0",
 
-  // ── TRUST (only if Yes)
-  trust_shares:
-    document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
-      ? officerForm.querySelector('[name="psc_trust_shares"]')?.value || "na"
-      : "na",
+      // ── TRUST ───────────────────────
+      trust_shares:
+        document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
+          ? officerForm.querySelector('[name="psc_trust_shares"]')?.value || "na"
+          : "na",
 
-  trust_voting:
-    document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
-      ? officerForm.querySelector('[name="psc_trust_voting"]')?.value || "na"
-      : "na",
+      trust_voting:
+        document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
+          ? officerForm.querySelector('[name="psc_trust_voting"]')?.value || "na"
+          : "na",
 
-  trust_directors:
-    document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
-      ? officerForm.querySelector('[name="psc_trust_directors"]')?.value || "0"
-      : "0",
+      trust_directors:
+        document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
+          ? officerForm.querySelector('[name="psc_trust_directors"]')?.value || "0"
+          : "0",
 
-  trust_other:
-    document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
-      ? officerForm.querySelector('[name="psc_trust_other"]')?.value || "0"
-      : "0"
-}
+      trust_other:
+        document.querySelector('input[name="psc_as_trust"]:checked')?.value === "1"
+          ? officerForm.querySelector('[name="psc_trust_other"]')?.value || "0"
+          : "0"
+    }
   };
 }
+
 
     function validateOfficer(data) {
         const errors = [];
