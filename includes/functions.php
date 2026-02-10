@@ -193,11 +193,7 @@ function ncuk_wrapper_shortcode() {
                 3. Appointments
             </a>
 
-            <a href="javascript:void(0);"
-               class="nav-tab step-item disabled"
-               data-step="4">
-                4. Documents
-            </a>
+           
         </h2>
 
         <!-- Step 1 Name Checker -->
@@ -222,9 +218,7 @@ function ncuk_wrapper_shortcode() {
                 <?php ncuk_render_step_form(3); ?>
             </div>
 
-            <div id="step4" class="step-form" style="display:none;">
-                <?php ncuk_render_step_form(4); ?>
-            </div>
+            
 
         </div>
 
