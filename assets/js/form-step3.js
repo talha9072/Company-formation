@@ -607,12 +607,37 @@ if (finalSaveBtn) {
             finalSaveBtn.textContent = "Save & Continue →";
             finalSaveBtn.dataset.saving = "0";
 
-            // ✅ ENABLE & MOVE TO STEP 4 (SAFE)
-            const step4 = document.querySelector('.step-item[data-step="4"]');
-            if (step4) {
-                step4.classList.remove("disabled");
-                step4.click(); // ✅ REAL CLICK ONLY
-            }
+           // ✅ 1. CLEAR LOCAL STORAGE (IMPORTANT)
+localStorage.removeItem("companyformation_token");
+localStorage.removeItem("ncuk_company_officers");
+
+// ✅ 2. SHOW SUCCESS NOTICE (NON-BLOCKING)
+const notice = document.createElement("div");
+notice.className = "company-save-success";
+notice.style.cssText = `
+    background: #e6fffa;
+    border: 1px solid #38b2ac;
+    color: #065f5b;
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin: 20px 0;
+    font-size: 15px;
+`;
+
+notice.innerHTML = `
+    <strong>✅ Company formation saved successfully</strong><br>
+    Your company details and officers have been securely saved.
+`;
+
+// Insert notice above the Save & Continue button
+finalSaveBtn.parentElement?.insertBefore(notice, finalSaveBtn);
+
+// ✅ 3. OPTIONAL: AUTO-HIDE NOTICE AFTER 5 SECONDS
+setTimeout(() => {
+    notice.style.opacity = "0";
+    notice.style.transition = "opacity .4s ease";
+    setTimeout(() => notice.remove(), 400);
+}, 5000);
         })
         .catch(err => {
             console.error("STEP3 NETWORK ERROR:", err);
