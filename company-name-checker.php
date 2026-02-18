@@ -67,6 +67,18 @@ add_action('admin_menu', function () {
         'namecheck-uk-registered-address',
         'ncuk_render_registered_address_page'
     );
+
+    // NEW Submenu: Submissions
+    add_submenu_page(
+        'namecheck-uk-settings',
+        'Submissions',
+        'Submissions',
+        'manage_options',
+        'namecheck-uk-submissions',
+        function () {
+            include NCUK_PATH . 'submissions.php';
+        }
+    );
 });
 
 /* ===============================================================
