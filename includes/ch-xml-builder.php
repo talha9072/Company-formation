@@ -160,27 +160,37 @@ function ch_generate_in01_xml($token) {
     </StatementOfCapital>
 
     <Subscribers>
-        <Person>
-            <Forename>John</Forename>
-            <Surname>Doe</Surname>
-        </Person>
-        <Address>
-            <Premise>1</Premise>
-            <PostTown>London</PostTown>
-            <Country>' . esc_xml($address_country) . '</Country>
-            <Postcode>SW1A1AA</Postcode>
-        </Address>
-        <MemberClass>ORDINARY</MemberClass>
-        <Shares>
-            <ShareClass>ORDINARY</ShareClass>
-            <NumShares>1</NumShares>
-            <AmountPaidDuePerShare>1.00</AmountPaidDuePerShare>
-            <AmountUnpaidPerShare>0.00</AmountUnpaidPerShare>
-            <ShareCurrency>GBP</ShareCurrency>
-            <ShareValue>1.00</ShareValue>
-        </Shares>
-       <MemorandumStatement>Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.</MemorandumStatement>
-    </Subscribers>
+    <Person>
+        <Forename>John</Forename>
+        <Surname>Doe</Surname>
+    </Person>
+
+    <Address>
+        <Premise>1</Premise>
+        <PostTown>London</PostTown>
+        <Country>' . esc_xml($address_country) . '</Country>
+        <Postcode>SW1A1AA</Postcode>
+    </Address>
+
+    <Authentication>
+        <MemorandumPersonalAuthentication>Agree</MemorandumPersonalAuthentication>
+    </Authentication>
+
+    <MemberClass>ORDINARY</MemberClass>
+
+    <Shares>
+        <ShareClass>ORDINARY</ShareClass>
+        <NumShares>1</NumShares>
+        <AmountPaidDuePerShare>1.00</AmountPaidDuePerShare>
+        <AmountUnpaidPerShare>0.00</AmountUnpaidPerShare>
+        <ShareCurrency>GBP</ShareCurrency>
+        <ShareValue>1.00</ShareValue>
+    </Shares>
+
+    <MemorandumStatement>
+        Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.
+    </MemorandumStatement>
+</Subscribers>
 
     <SameDay>false</SameDay>
 
