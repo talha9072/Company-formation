@@ -6,28 +6,150 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 
 /*
-|--------------------------------------------------------------------------
+|------------------------------------------------------------------
 | 1. ENVIRONMENT
-|--------------------------------------------------------------------------
+|------------------------------------------------------------------
 */
 $environment = get_option('ch_environment', 'test');
 
-$presenter_id = ($environment === 'live')
+$presenter_id = trim(($environment === 'live')
     ? get_option('ch_presenter_id_live')
-    : get_option('ch_presenter_id_test');
+    : get_option('ch_presenter_id_test'));
+
+$password = trim(($environment === 'live')
+    ? get_option('ch_auth_code_live')
+    : get_option('ch_auth_code_test'));
+
+$gateway_url = 'https://xmlgw.companieshouse.gov.uk/v1-0/xmlgw/Gateway';
 
 /*
-|--------------------------------------------------------------------------
+|------------------------------------------------------------------
 | 2. TABLES
-|--------------------------------------------------------------------------
+|------------------------------------------------------------------
 */
 $saved_table      = $wpdb->prefix . 'saved_companies';
 $formation_table  = $wpdb->prefix . 'companyformation';
 
 /*
-|--------------------------------------------------------------------------
-| 3. FETCH SUBMISSIONS
-|--------------------------------------------------------------------------
+|------------------------------------------------------------------
+| 3. HANDLE SUBMIT ACTION
+|------------------------------------------------------------------
+*/
+if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['token'])) {
+
+    $token = sanitize_text_field($_GET['token']);
+
+    require_once plugin_dir_path(__FILE__) . 'includes/ch-xml-builder.php';
+
+    $company_xml = ch_generate_in01_xml($token);
+
+    if (!$company_xml) {
+        echo '<div class="notice notice-error"><p>❌ XML Generation Failed.</p></div>';
+    } else {
+
+        $submission_number = str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+
+        /*
+        |--------------------------------------------------------------------------
+        | IMPORTANT: NO <Body> WRAPPER
+        |--------------------------------------------------------------------------
+        */
+        $full_xml = '<?xml version="1.0" encoding="UTF-8"?>
+<FormSubmission
+    xmlns="http://xmlgw.companieshouse.gov.uk/Header"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlgw.companieshouse.gov.uk/Header http://xmlgw.companieshouse.gov.uk/v2-1/schema/forms/FormSubmission-v2-11.xsd">
+
+    <FormHeader>
+        <CompanyName>TEST COMPANY CLEAN LIMITED</CompanyName>
+        <PackageReference>' . esc_xml(time()) . '</PackageReference>
+        <FormIdentifier>IN01</FormIdentifier>
+        <SubmissionNumber>' . esc_xml($submission_number) . '</SubmissionNumber>
+        <ContactName>System</ContactName>
+        <ContactNumber>00000000000</ContactNumber>
+    </FormHeader>
+
+    <DateSigned>' . esc_xml(date('Y-m-d')) . '</DateSigned>
+
+    <Form>
+        ' . $company_xml . '
+    </Form>
+
+</FormSubmission>';
+
+        /*
+        |--------------------------------------------------------------------------
+        | DEBUG
+        |--------------------------------------------------------------------------
+        */
+        echo '<h2>📤 XML Sent</h2>';
+        echo '<pre style="background:#fff;padding:15px;border:1px solid #ccc;max-height:400px;overflow:auto;">';
+        echo esc_html($full_xml);
+        echo '</pre>';
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEND REQUEST (BASIC AUTH)
+        |--------------------------------------------------------------------------
+        */
+        $response = wp_remote_post($gateway_url, [
+            'headers' => [
+                'Content-Type'  => 'text/xml; charset=utf-8',
+                'Authorization' => 'Basic ' . base64_encode($presenter_id . ':' . $password)
+            ],
+            'body'    => $full_xml,
+            'timeout' => 60
+        ]);
+
+        if (is_wp_error($response)) {
+
+            echo '<div class="notice notice-error"><p>❌ Connection Error: '
+                 . esc_html($response->get_error_message()) . '</p></div>';
+
+        } else {
+
+            $body = wp_remote_retrieve_body($response);
+
+            echo '<h2>📥 Raw Response</h2>';
+            echo '<pre style="background:#fff;padding:15px;border:1px solid #ccc;max-height:400px;overflow:auto;">';
+            echo esc_html($body);
+            echo '</pre>';
+
+            if (stripos($body, '<Status>ACCEPTED</Status>') !== false) {
+
+                $wpdb->update(
+                    $saved_table,
+                    ['status' => 'accepted'],
+                    ['formation_token' => $token]
+                );
+
+                echo '<div class="notice notice-success"><p>✅ Submission Accepted!</p></div>';
+
+            } else {
+
+                $wpdb->update(
+                    $saved_table,
+                    ['status' => 'rejected'],
+                    ['formation_token' => $token]
+                );
+
+                echo '<div class="notice notice-error"><p>❌ Submission Rejected.</p></div>';
+
+                if (preg_match('/<Text>(.*?)<\/Text>/', $body, $matches)) {
+                    echo '<h3>Rejection Reason:</h3>';
+                    echo '<pre style="background:#fff;padding:10px;border:1px solid #ccc;">'
+                        . esc_html($matches[1]) .
+                        '</pre>';
+                }
+            }
+        }
+    }
+}
+
+/*
+|------------------------------------------------------------------
+| 4. FETCH SUBMISSIONS
+|------------------------------------------------------------------
 */
 $submissions = $wpdb->get_results("
     SELECT s.id,
@@ -46,28 +168,21 @@ $submissions = $wpdb->get_results("
     <h1 class="wp-heading-inline">NameCheck Submissions</h1>
     <hr class="wp-header-end">
 
-    <p><strong>Environment:</strong> <?php echo esc_html(strtoupper($environment)); ?></p>
-    <p><strong>Presenter ID:</strong> <?php echo esc_html($presenter_id); ?></p>
-
-    <table class="wp-list-table widefat fixed striped table-view-list">
+    <table class="wp-list-table widefat fixed striped">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Company Name</th>
-                <th>Submission No.</th>
                 <th>Status</th>
                 <th>Date</th>
-                <th width="260">Actions</th>
+                <th width="300">Actions</th>
             </tr>
         </thead>
-
         <tbody>
 
         <?php if (!empty($submissions)) : ?>
+            <?php foreach ($submissions as $submission) :
 
-            <?php foreach ($submissions as $submission) : ?>
-
-                <?php
                 $company_name = '—';
 
                 if (!empty($submission->data)) {
@@ -78,71 +193,45 @@ $submissions = $wpdb->get_results("
                 }
 
                 $status = $submission->status ?? 'unknown';
-                ?>
-
+            ?>
                 <tr>
                     <td><?php echo esc_html($submission->id); ?></td>
-
-                    <td>
-                        <strong><?php echo esc_html($company_name); ?></strong>
-                    </td>
-
-                    <td>—</td>
-
-                    <td>
-                        <?php
-                        switch ($status) {
-                            case 'saved':
-                                echo '<span style="color:#dba617;font-weight:600;">Saved</span>';
-                                break;
-                            case 'accepted':
-                                echo '<span style="color:green;font-weight:600;">Accepted</span>';
-                                break;
-                            case 'rejected':
-                                echo '<span style="color:red;font-weight:600;">Rejected</span>';
-                                break;
-                            default:
-                                echo esc_html(ucfirst($status));
-                        }
-                        ?>
-                    </td>
-
+                    <td><strong><?php echo esc_html($company_name); ?></strong></td>
+                    <td><?php echo esc_html(ucfirst($status)); ?></td>
                     <td><?php echo esc_html($submission->created_at); ?></td>
-
                     <td>
 
-                        <!-- EDIT -->
-                        <a href="?page=namecheck-uk-submissions&action=edit&token=<?php echo esc_attr($submission->formation_token); ?>"
-                           class="button button-primary">
-                            Edit
-                        </a>
+                        <?php if ($status === 'saved') : ?>
 
-                        <!-- DETAILS -->
-                        <a href="?page=namecheck-uk-submissions&action=details&token=<?php echo esc_attr($submission->formation_token); ?>"
-                           class="button">
-                            Details
-                        </a>
-
-                        <!-- SUBMIT (ALLOWED FOR SAVED + REJECTED) -->
-                        <?php if ($status !== 'accepted') : ?>
                             <a href="?page=namecheck-uk-submissions&action=submit&token=<?php echo esc_attr($submission->formation_token); ?>"
-                               class="button button-secondary"
-                               onclick="return confirm('Are you sure you want to submit this to Companies House?');">
-                                Submit
-                            </a>
+                               class="button button-primary">Submit</a>
+
+                            <a href="?page=namecheck-uk-submissions&action=edit&token=<?php echo esc_attr($submission->formation_token); ?>"
+                               class="button">Edit</a>
+
+                            <a href="?page=namecheck-uk-submissions&action=details&token=<?php echo esc_attr($submission->formation_token); ?>"
+                               class="button">Details</a>
+
+                        <?php elseif ($status === 'rejected') : ?>
+
+                            <a href="?page=namecheck-uk-submissions&action=submit&token=<?php echo esc_attr($submission->formation_token); ?>"
+                               class="button button-primary">Submit</a>
+
+                            <a href="?page=namecheck-uk-submissions&action=details&token=<?php echo esc_attr($submission->formation_token); ?>"
+                               class="button">Details</a>
+
+                        <?php elseif ($status === 'accepted') : ?>
+
+                            <a href="?page=namecheck-uk-submissions&action=details&token=<?php echo esc_attr($submission->formation_token); ?>"
+                               class="button button-secondary">Details</a>
+
                         <?php endif; ?>
 
                     </td>
                 </tr>
-
             <?php endforeach; ?>
-
         <?php else : ?>
-
-            <tr>
-                <td colspan="6">No submissions found.</td>
-            </tr>
-
+            <tr><td colspan="5">No submissions found.</td></tr>
         <?php endif; ?>
 
         </tbody>
