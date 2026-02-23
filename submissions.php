@@ -47,11 +47,32 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
         echo '<div class="notice notice-error"><p>❌ XML Generation Failed.</p></div>';
     } else {
 
+        /*
+        |--------------------------------------------------------------------------
+        | FETCH COMPANY NAME DYNAMICALLY
+        |--------------------------------------------------------------------------
+        */
+        $formation = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT data FROM {$formation_table} WHERE token = %s LIMIT 1",
+                $token
+            )
+        );
+
+        $company_name = 'UNKNOWN COMPANY';
+
+        if ($formation) {
+            $data = maybe_unserialize($formation->data ?? '');
+            if (is_array($data) && !empty($data['company_name'])) {
+                $company_name = $data['company_name'];
+            }
+        }
+
         $submission_number = str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
 
         /*
         |--------------------------------------------------------------------------
-        | IMPORTANT: NO <Body> WRAPPER
+        | CORRECT FORM SUBMISSION STRUCTURE
         |--------------------------------------------------------------------------
         */
         $full_xml = '<?xml version="1.0" encoding="UTF-8"?>
@@ -61,7 +82,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
     xsi:schemaLocation="http://xmlgw.companieshouse.gov.uk/Header http://xmlgw.companieshouse.gov.uk/v2-1/schema/forms/FormSubmission-v2-11.xsd">
 
     <FormHeader>
-        <CompanyName>TEST COMPANY CLEAN LIMITED</CompanyName>
+        <CompanyName>' . esc_xml($company_name) . '</CompanyName>
         <PackageReference>' . esc_xml(time()) . '</PackageReference>
         <FormIdentifier>IN01</FormIdentifier>
         <SubmissionNumber>' . esc_xml($submission_number) . '</SubmissionNumber>
@@ -79,7 +100,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
 
         /*
         |--------------------------------------------------------------------------
-        | DEBUG
+        | DEBUG OUTPUT
         |--------------------------------------------------------------------------
         */
         echo '<h2>📤 XML Sent</h2>';
@@ -202,7 +223,6 @@ $submissions = $wpdb->get_results("
                     <td>
 
                         <?php if ($status === 'saved') : ?>
-
                             <a href="?page=namecheck-uk-submissions&action=submit&token=<?php echo esc_attr($submission->formation_token); ?>"
                                class="button button-primary">Submit</a>
 
@@ -213,7 +233,6 @@ $submissions = $wpdb->get_results("
                                class="button">Details</a>
 
                         <?php elseif ($status === 'rejected') : ?>
-
                             <a href="?page=namecheck-uk-submissions&action=submit&token=<?php echo esc_attr($submission->formation_token); ?>"
                                class="button button-primary">Submit</a>
 
@@ -221,10 +240,8 @@ $submissions = $wpdb->get_results("
                                class="button">Details</a>
 
                         <?php elseif ($status === 'accepted') : ?>
-
                             <a href="?page=namecheck-uk-submissions&action=details&token=<?php echo esc_attr($submission->formation_token); ?>"
                                class="button button-secondary">Details</a>
-
                         <?php endif; ?>
 
                     </td>

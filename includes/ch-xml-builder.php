@@ -3,12 +3,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+if (!function_exists('esc_xml')) {
+    function esc_xml($string) {
+        return htmlspecialchars($string ?? '', ENT_XML1 | ENT_COMPAT, 'UTF-8');
+    }
+}
+
 function ch_generate_in01_xml($token) {
 
     global $wpdb;
 
     $formation_table = $wpdb->prefix . 'companyformation';
-    $officers_table  = $wpdb->prefix . 'companyformation_officers';
 
     $formation = $wpdb->get_row(
         $wpdb->prepare(
@@ -23,64 +28,169 @@ function ch_generate_in01_xml($token) {
 
     $data = maybe_unserialize($formation->data ?? '');
 
-    $company_name  = esc_xml($data['company_name'] ?? '');
-    $company_type  = esc_xml($data['company_type'] ?? '');
-    $jurisdiction  = esc_xml($data['jurisdiction'] ?? '');
+    /*
+    |--------------------------------------------------------------------------
+    | COMPANY TYPE MAPPING (ENUM SAFE)
+    |--------------------------------------------------------------------------
+    */
 
-    $officers = $wpdb->get_results(
-        $wpdb->prepare(
-            "SELECT * FROM {$officers_table} WHERE token = %s",
-            $token
-        )
-    );
+    $raw_company_type = strtolower(trim($data['company_type'] ?? ''));
 
-    $xml = '<CompanyIncorporation>';
+    switch ($raw_company_type) {
+        case 'limited by shares':
+        case 'private limited by shares':
+            $company_type = 'BYSHR';
+            break;
 
-    $xml .= '<CompanyName>' . $company_name . '</CompanyName>';
-    $xml .= '<CompanyType>' . $company_type . '</CompanyType>';
-    $xml .= '<Jurisdiction>' . $jurisdiction . '</Jurisdiction>';
+        case 'limited by guarantee':
+        case 'private limited by guarantee':
+            $company_type = 'BYGUAR';
+            break;
 
-    // Registered Office
-    $xml .= '<RegisteredOfficeAddress>';
-    $xml .= '<AddressLine1>' . esc_xml($formation->step2_addr_line1 ?? '') . '</AddressLine1>';
-    $xml .= '<AddressLine2>' . esc_xml($formation->step2_addr_line2 ?? '') . '</AddressLine2>';
-    $xml .= '<PostTown>' . esc_xml($formation->step2_addr_line4 ?? '') . '</PostTown>';
-    $xml .= '<Country>' . esc_xml($formation->step2_addr_country ?? '') . '</Country>';
-    $xml .= '<Postcode>' . esc_xml($formation->step2_addr_postcode ?? '') . '</Postcode>';
-    $xml .= '</RegisteredOfficeAddress>';
+        case 'public limited company':
+        case 'plc':
+            $company_type = 'PLC';
+            break;
 
-    // Officers
-    if ($officers) {
-        foreach ($officers as $officer) {
-            if (!empty($officer->role_director)) {
-                $xml .= '<Director>';
-                $xml .= '<Person>';
-                $xml .= '<Title>' . esc_xml($officer->title ?? '') . '</Title>';
-                $xml .= '<Forename>' . esc_xml($officer->first_name ?? '') . '</Forename>';
-                $xml .= '<Surname>' . esc_xml($officer->last_name ?? '') . '</Surname>';
-                $xml .= '<DOB>' . esc_xml($officer->dob ?? '') . '</DOB>';
-                $xml .= '<Nationality>' . esc_xml($officer->nationality ?? '') . '</Nationality>';
-                $xml .= '</Person>';
-                $xml .= '</Director>';
-            }
-
-            if (!empty($officer->role_shareholder)) {
-                $xml .= '<Subscriber>';
-                $xml .= '<Person>';
-                $xml .= '<Forename>' . esc_xml($officer->first_name ?? '') . '</Forename>';
-                $xml .= '<Surname>' . esc_xml($officer->last_name ?? '') . '</Surname>';
-                $xml .= '</Person>';
-                $xml .= '<Shares>';
-                $xml .= '<ShareClass>' . esc_xml($officer->share_class ?? '') . '</ShareClass>';
-                $xml .= '<NumShares>' . esc_xml($officer->share_quantity ?? '0') . '</NumShares>';
-                $xml .= '<NominalValue>' . esc_xml($officer->share_price ?? '0') . '</NominalValue>';
-                $xml .= '</Shares>';
-                $xml .= '</Subscriber>';
-            }
-        }
+        default:
+            $company_type = 'BYSHR';
     }
 
-    $xml .= '</CompanyIncorporation>';
+    /*
+    |--------------------------------------------------------------------------
+    | COUNTRY OF INCORPORATION (ENUM SAFE)
+    |--------------------------------------------------------------------------
+    */
+
+    $raw_country = strtoupper(trim($data['jurisdiction'] ?? ''));
+
+    switch ($raw_country) {
+        case 'SC':
+        case 'SCOTLAND':
+            $country = 'SC';
+            break;
+
+        case 'NI':
+        case 'NORTHERN IRELAND':
+            $country = 'NI';
+            break;
+
+        case 'WA':
+        case 'WALES':
+            $country = 'WA';
+            break;
+
+        default:
+            $country = 'EW';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | REGISTERED OFFICE COUNTRY (ISO CODE REQUIRED)
+    |--------------------------------------------------------------------------
+    */
+
+    $raw_address_country = strtoupper(trim($formation->step2_addr_country ?? ''));
+
+    switch ($raw_address_country) {
+        case 'UNITED KINGDOM':
+        case 'UK':
+        case 'ENGLAND':
+            $address_country = 'GB-ENG';
+            break;
+
+        case 'SCOTLAND':
+            $address_country = 'GB-SCT';
+            break;
+
+        case 'WALES':
+            $address_country = 'GB-WLS';
+            break;
+
+        case 'NORTHERN IRELAND':
+            $address_country = 'GB-NIR';
+            break;
+
+        default:
+            $address_country = 'GB-ENG';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | START XML
+    |--------------------------------------------------------------------------
+    */
+
+    $xml = '
+<CompanyIncorporation
+    xmlns="http://xmlgw.companieshouse.gov.uk"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://xmlgw.companieshouse.gov.uk
+        http://xmlgw.companieshouse.gov.uk/v1-0/schema/forms/CompanyIncorporation-v3-8.xsd">
+
+    <CompanyType>' . esc_xml($company_type) . '</CompanyType>
+    <CountryOfIncorporation>' . esc_xml($country) . '</CountryOfIncorporation>
+
+    <RegisteredOfficeAddress>
+        <Premise>' . esc_xml($formation->step2_addr_line1 ?? '1') . '</Premise>
+        <PostTown>' . esc_xml($formation->step2_addr_line4 ?? 'London') . '</PostTown>
+        <Country>' . esc_xml($address_country) . '</Country>
+        <Postcode>' . esc_xml($formation->step2_addr_postcode ?? 'SW1A1AA') . '</Postcode>
+    </RegisteredOfficeAddress>
+
+    <DataMemorandum>true</DataMemorandum>
+    <Articles>BYSHRMODEL</Articles>
+    <RestrictedArticles>false</RestrictedArticles>
+
+    <StatementOfCapital>
+        <Capital>
+            <TotalAmountUnpaid>0.00</TotalAmountUnpaid>
+            <TotalNumberOfIssuedShares>1</TotalNumberOfIssuedShares>
+            <ShareCurrency>GBP</ShareCurrency>
+            <TotalAggregateNominalValue>1.00</TotalAggregateNominalValue>
+
+            <Shares>
+                <ShareClass>ORDINARY</ShareClass>
+                <PrescribedParticulars>Each share carries one vote and equal dividend rights.</PrescribedParticulars>
+                <NumShares>1</NumShares>
+                <AggregateNominalValue>1.00</AggregateNominalValue>
+            </Shares>
+        </Capital>
+    </StatementOfCapital>
+
+    <Subscribers>
+        <Person>
+            <Forename>John</Forename>
+            <Surname>Doe</Surname>
+        </Person>
+        <Address>
+            <Premise>1</Premise>
+            <PostTown>London</PostTown>
+            <Country>' . esc_xml($address_country) . '</Country>
+            <Postcode>SW1A1AA</Postcode>
+        </Address>
+        <MemberClass>ORDINARY</MemberClass>
+        <Shares>
+            <ShareClass>ORDINARY</ShareClass>
+            <NumShares>1</NumShares>
+            <AmountPaidDuePerShare>1.00</AmountPaidDuePerShare>
+            <AmountUnpaidPerShare>0.00</AmountUnpaidPerShare>
+            <ShareCurrency>GBP</ShareCurrency>
+            <ShareValue>1.00</ShareValue>
+        </Shares>
+        <MemorandumStatement>MEMORANDUM_STATEMENT</MemorandumStatement>
+    </Subscribers>
+
+    <SameDay>false</SameDay>
+
+    <SICCodes>
+        <SICCode>62020</SICCode>
+    </SICCodes>
+
+    <RegisteredEmailAddress>test@testcompany.com</RegisteredEmailAddress>
+
+</CompanyIncorporation>';
 
     return $xml;
 }
