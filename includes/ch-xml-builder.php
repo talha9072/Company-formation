@@ -143,6 +143,42 @@ function ch_generate_in01_xml($token) {
     <Articles>BYSHRMODEL</Articles>
     <RestrictedArticles>false</RestrictedArticles>
 
+    <!-- REQUIRED: Appointment BEFORE StatementOfCapital -->
+    <Appointment>
+    <ConsentToAct>true</ConsentToAct>
+    <Director>
+        <Person>
+
+            <Title>Mr</Title>
+            <Forename>John</Forename>
+            <OtherForenames>NA</OtherForenames>
+            <Surname>Doe</Surname>
+
+            <ServiceAddress>
+                <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
+            </ServiceAddress>
+
+            <DOB>1990-01-01</DOB>
+            <Nationality>British</Nationality>
+            <CountryOfResidence>United Kingdom</CountryOfResidence>
+
+            <ResidentialAddress>
+                <SameAsServiceAddress>true</SameAsServiceAddress>
+            </ResidentialAddress>
+
+            <VerificationDetails>
+                <CompaniesHousePersonalCode>12345678901</CompaniesHousePersonalCode>
+                <VerificationStatements>
+                    <VerificationStatementForIndividual>
+                        INDIVIDUAL_VERIFIED
+                    </VerificationStatementForIndividual>
+                </VerificationStatements>
+            </VerificationDetails>
+
+        </Person>
+    </Director>
+</Appointment>
+
     <StatementOfCapital>
         <Capital>
             <TotalAmountUnpaid>0.00</TotalAmountUnpaid>
@@ -160,37 +196,45 @@ function ch_generate_in01_xml($token) {
     </StatementOfCapital>
 
     <Subscribers>
-    <Person>
-        <Forename>John</Forename>
-        <Surname>Doe</Surname>
-    </Person>
+        <Person>
+            <Forename>John</Forename>
+            <Surname>Doe</Surname>
+        </Person>
 
-    <Address>
-        <Premise>1</Premise>
-        <PostTown>London</PostTown>
-        <Country>' . esc_xml($address_country) . '</Country>
-        <Postcode>SW1A1AA</Postcode>
-    </Address>
+        <Address>
+            <Premise>1</Premise>
+            <PostTown>London</PostTown>
+            <Country>' . esc_xml($address_country) . '</Country>
+            <Postcode>SW1A1AA</Postcode>
+        </Address>
 
-   <Authentication>
-    <MemorandumPersonalAuthentication>
-        SUBSCRIBER_AGREES_NAME_USED_TO_AUTHENTICATE
-    </MemorandumPersonalAuthentication>
-</Authentication>
+        <Authentication>
+            <MemorandumPersonalAuthentication>
+                SUBSCRIBER_AGREES_NAME_USED_TO_AUTHENTICATE
+            </MemorandumPersonalAuthentication>
+        </Authentication>
 
-    <MemberClass>ORDINARY</MemberClass>
+        <Shares>
+            <ShareClass>ORDINARY</ShareClass>
+            <NumShares>1</NumShares>
+            <AmountPaidDuePerShare>1.00</AmountPaidDuePerShare>
+            <AmountUnpaidPerShare>0.00</AmountUnpaidPerShare>
+            <ShareCurrency>GBP</ShareCurrency>
+            <ShareValue>1.00</ShareValue>
+        </Shares>
 
-    <Shares>
-        <ShareClass>ORDINARY</ShareClass>
-        <NumShares>1</NumShares>
-        <AmountPaidDuePerShare>1.00</AmountPaidDuePerShare>
-        <AmountUnpaidPerShare>0.00</AmountUnpaidPerShare>
-        <ShareCurrency>GBP</ShareCurrency>
-        <ShareValue>1.00</ShareValue>
-    </Shares>
+        <MemorandumStatement>
+            Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.
+        </MemorandumStatement>
+    </Subscribers>
 
-   <MemorandumStatement>Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.</MemorandumStatement>
-</Subscribers>
+    <!-- REQUIRED -->
+    <Authoriser>
+        <Person>
+            <Forename>John</Forename>
+            <Surname>Doe</Surname>
+        </Person>
+    </Authoriser>
 
     <SameDay>false</SameDay>
 
@@ -199,6 +243,9 @@ function ch_generate_in01_xml($token) {
     </SICCodes>
 
     <RegisteredEmailAddress>test@testcompany.com</RegisteredEmailAddress>
+
+    <!-- REQUIRED FINAL ELEMENT -->
+    <AcceptLawfulPurposeStatement>true</AcceptLawfulPurposeStatement>
 
 </CompanyIncorporation>';
 
