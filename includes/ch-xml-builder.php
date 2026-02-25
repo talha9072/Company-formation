@@ -223,9 +223,7 @@ function ch_generate_in01_xml($token) {
             <ShareValue>1.00</ShareValue>
         </Shares>
 
-        <MemorandumStatement>
-            Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.
-        </MemorandumStatement>
+        <MemorandumStatement>Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.</MemorandumStatement>
     </Subscribers>
 
     <!-- REQUIRED -->
