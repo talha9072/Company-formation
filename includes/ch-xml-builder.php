@@ -180,20 +180,19 @@ function ch_generate_in01_xml($token) {
 </Appointment>
 
     <StatementOfCapital>
-        <Capital>
-            <TotalAmountUnpaid>0.00</TotalAmountUnpaid>
-            <TotalNumberOfIssuedShares>1</TotalNumberOfIssuedShares>
-            <ShareCurrency>GBP</ShareCurrency>
-            <TotalAggregateNominalValue>1.00</TotalAggregateNominalValue>
-
-            <Shares>
-                <ShareClass>ORDINARY</ShareClass>
-                <PrescribedParticulars>Each share carries one vote and equal dividend rights.</PrescribedParticulars>
-                <NumShares>1</NumShares>
-                <AggregateNominalValue>1.00</AggregateNominalValue>
-            </Shares>
-        </Capital>
-    </StatementOfCapital>
+    <Capital>
+        <TotalAmountUnpaid>0.00</TotalAmountUnpaid>
+        <TotalNumberOfIssuedShares>1</TotalNumberOfIssuedShares>
+        <ShareCurrency>GBP</ShareCurrency>
+        <TotalAggregateNominalValue>1.00</TotalAggregateNominalValue>
+        <Shares>
+            <ShareClass>ORDINARY</ShareClass>
+            <PrescribedParticulars>Each ordinary share carries one vote, the right to participate equally in dividends declared, and equal rights to any surplus assets on winding up.</PrescribedParticulars>
+            <NumShares>1</NumShares>
+            <AggregateNominalValue>1.00</AggregateNominalValue>
+        </Shares>
+    </Capital>
+</StatementOfCapital>
 
     <Subscribers>
         <Person>
@@ -226,13 +225,7 @@ function ch_generate_in01_xml($token) {
         <MemorandumStatement>Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.</MemorandumStatement>
     </Subscribers>
 
-    <!-- REQUIRED -->
-    <Authoriser>
-        <Person>
-            <Forename>John</Forename>
-            <Surname>Doe</Surname>
-        </Person>
-    </Authoriser>
+
 
     <SameDay>false</SameDay>
 
