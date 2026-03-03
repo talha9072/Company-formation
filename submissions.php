@@ -48,9 +48,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
     } else {
 
         /*
-        |--------------------------------------------------------------------------
-        | FETCH COMPANY NAME DYNAMICALLY
-        |--------------------------------------------------------------------------
+        |------------------------------------------------------------------
+        | FETCH COMPANY NAME
+        |------------------------------------------------------------------
         */
         $formation = $wpdb->get_row(
             $wpdb->prepare(
@@ -59,7 +59,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
             )
         );
 
-        $company_name = 'UNKNOWN COMPANY';
+        $company_name = 'TEST COMPANY ' . time() . ' LTD';
 
         if ($formation) {
             $data = maybe_unserialize($formation->data ?? '');
@@ -68,40 +68,76 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
             }
         }
 
+        /*
+        |------------------------------------------------------------------
+        | GENERATE IDS
+        |------------------------------------------------------------------
+        */
+        $transaction_id   = time() . rand(1000,9999);
         $submission_number = str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
 
+        $sender_id  = md5(strtolower($presenter_id));
+        $auth_value = md5(strtolower($password));
+
         /*
-        |--------------------------------------------------------------------------
-        | CORRECT FORM SUBMISSION STRUCTURE
-        |--------------------------------------------------------------------------
+        |------------------------------------------------------------------
+        | BUILD FULL GOVTALK XML
+        |------------------------------------------------------------------
         */
         $full_xml = '<?xml version="1.0" encoding="UTF-8"?>
-<FormSubmission
-    xmlns="http://xmlgw.companieshouse.gov.uk/Header"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlgw.companieshouse.gov.uk/Header http://xmlgw.companieshouse.gov.uk/v2-1/schema/forms/FormSubmission-v2-11.xsd">
+<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
+    <EnvelopeVersion>2.0</EnvelopeVersion>
 
-    <FormHeader>
-        <CompanyName>' . esc_xml($company_name) . '</CompanyName>
-        <PackageReference>' . esc_xml(time()) . '</PackageReference>
-        <FormIdentifier>IN01</FormIdentifier>
-        <SubmissionNumber>' . esc_xml($submission_number) . '</SubmissionNumber>
-        <ContactName>System</ContactName>
-        <ContactNumber>00000000000</ContactNumber>
-    </FormHeader>
+    <Header>
+        <MessageDetails>
+            <Class>CompanyIncorporation</Class>
+            <Qualifier>request</Qualifier>
+            <TransactionID>' . esc_xml($transaction_id) . '</TransactionID>
+        </MessageDetails>
 
-    <DateSigned>' . esc_xml(date('Y-m-d')) . '</DateSigned>
+        <SenderDetails>
+            <IDAuthentication>
+                <SenderID>' . esc_xml($sender_id) . '</SenderID>
+                <Authentication>
+                    <Method>clear</Method>
+                    <Value>' . esc_xml($auth_value) . '</Value>
+                </Authentication>
+            </IDAuthentication>
+            <EmailAddress>system@test.com</EmailAddress>
+        </SenderDetails>
+    </Header>
 
-    <Form>
-        ' . $company_xml . '
-    </Form>
+    <Body>
+        <FormSubmission
+            xmlns="http://xmlgw.companieshouse.gov.uk/Header"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="
+                http://xmlgw.companieshouse.gov.uk/Header
+                http://xmlgw.companieshouse.gov.uk/v2-1/schema/forms/FormSubmission-v2-11.xsd">
 
-</FormSubmission>';
+            <FormHeader>
+                <CompanyName>' . esc_xml($company_name) . '</CompanyName>
+                <PackageReference>' . esc_xml($transaction_id) . '</PackageReference>
+                <FormIdentifier>CompanyIncorporation</FormIdentifier>
+                <SubmissionNumber>' . esc_xml($submission_number) . '</SubmissionNumber>
+                <ContactName>System</ContactName>
+                <ContactNumber>00000000000</ContactNumber>
+            </FormHeader>
+
+            <DateSigned>' . date('Y-m-d') . '</DateSigned>
+
+            <Form>
+                ' . $company_xml . '
+            </Form>
+
+        </FormSubmission>
+    </Body>
+</GovTalkMessage>';
 
         /*
-        |--------------------------------------------------------------------------
+        |------------------------------------------------------------------
         | DEBUG OUTPUT
-        |--------------------------------------------------------------------------
+        |------------------------------------------------------------------
         */
         echo '<h2>📤 XML Sent</h2>';
         echo '<pre style="background:#fff;padding:15px;border:1px solid #ccc;max-height:400px;overflow:auto;">';
@@ -109,14 +145,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
         echo '</pre>';
 
         /*
-        |--------------------------------------------------------------------------
-        | SEND REQUEST (BASIC AUTH)
-        |--------------------------------------------------------------------------
+        |------------------------------------------------------------------
+        | SEND REQUEST (NO BASIC AUTH)
+        |------------------------------------------------------------------
         */
         $response = wp_remote_post($gateway_url, [
             'headers' => [
-                'Content-Type'  => 'text/xml; charset=utf-8',
-                'Authorization' => 'Basic ' . base64_encode($presenter_id . ':' . $password)
+                'Content-Type' => 'text/xml; charset=utf-8'
             ],
             'body'    => $full_xml,
             'timeout' => 60
@@ -226,22 +261,12 @@ $submissions = $wpdb->get_results("
                             <a href="?page=namecheck-uk-submissions&action=submit&token=<?php echo esc_attr($submission->formation_token); ?>"
                                class="button button-primary">Submit</a>
 
-                            <a href="?page=namecheck-uk-submissions&action=edit&token=<?php echo esc_attr($submission->formation_token); ?>"
-                               class="button">Edit</a>
-
-                            <a href="?page=namecheck-uk-submissions&action=details&token=<?php echo esc_attr($submission->formation_token); ?>"
-                               class="button">Details</a>
-
                         <?php elseif ($status === 'rejected') : ?>
                             <a href="?page=namecheck-uk-submissions&action=submit&token=<?php echo esc_attr($submission->formation_token); ?>"
-                               class="button button-primary">Submit</a>
-
-                            <a href="?page=namecheck-uk-submissions&action=details&token=<?php echo esc_attr($submission->formation_token); ?>"
-                               class="button">Details</a>
+                               class="button button-primary">Submit Again</a>
 
                         <?php elseif ($status === 'accepted') : ?>
-                            <a href="?page=namecheck-uk-submissions&action=details&token=<?php echo esc_attr($submission->formation_token); ?>"
-                               class="button button-secondary">Details</a>
+                            <span style="color:green;font-weight:bold;">Accepted</span>
                         <?php endif; ?>
 
                     </td>

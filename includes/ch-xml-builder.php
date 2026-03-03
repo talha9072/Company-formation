@@ -28,214 +28,147 @@ function ch_generate_in01_xml($token) {
 
     $data = maybe_unserialize($formation->data ?? '');
 
-    /*
-    |--------------------------------------------------------------------------
-    | COMPANY TYPE MAPPING (ENUM SAFE)
-    |--------------------------------------------------------------------------
-    */
+    // Values
+    $company_type     = 'BYSHR';
+    $country_incorp   = 'EW';
 
-    $raw_company_type = strtolower(trim($data['company_type'] ?? ''));
+    $premise          = !empty($data['step2_addr_line1'])   ? $data['step2_addr_line1']   : '123 High Street';
+    $post_town        = !empty($data['step2_addr_line4'])   ? $data['step2_addr_line4']   : 'London';
+    $postcode         = !empty($data['step2_addr_postcode']) ? strtoupper(str_replace(' ', '', $data['step2_addr_postcode'])) : 'EC1A1BB';
+    $address_country  = 'GB-ENG';
 
-    switch ($raw_company_type) {
-        case 'limited by shares':
-        case 'private limited by shares':
-            $company_type = 'BYSHR';
-            break;
+    $title            = 'Mr';
+    $forename         = !empty($data['director_forename']) ? $data['director_forename'] : 'Thomas';
+    $surname          = !empty($data['director_surname'])  ? $data['director_surname']  : 'Anderson';
 
-        case 'limited by guarantee':
-        case 'private limited by guarantee':
-            $company_type = 'BYGUAR';
-            break;
+    $dob_year         = !empty($data['director_dob_year'])  ? $data['director_dob_year']  : '1988';
+    $dob_month        = !empty($data['director_dob_month']) ? str_pad($data['director_dob_month'], 2, '0', STR_PAD_LEFT) : '08';
+    $dob_day          = !empty($data['director_dob_day'])   ? str_pad($data['director_dob_day'],   2, '0', STR_PAD_LEFT) : '15';
+    $dob              = "{$dob_year}-{$dob_month}-{$dob_day}";
 
-        case 'public limited company':
-        case 'plc':
-            $company_type = 'PLC';
-            break;
+    $nationality      = 'British';
+    $country_res      = 'United Kingdom';
 
-        default:
-            $company_type = 'BYSHR';
-    }
+    $sic_code         = '62020';
+    $reg_email        = 'thomas.anderson@exampleltd.co.uk';
 
-    /*
-    |--------------------------------------------------------------------------
-    | COUNTRY OF INCORPORATION (ENUM SAFE)
-    |--------------------------------------------------------------------------
-    */
-
-    $raw_country = strtoupper(trim($data['jurisdiction'] ?? ''));
-
-    switch ($raw_country) {
-        case 'SC':
-        case 'SCOTLAND':
-            $country = 'SC';
-            break;
-
-        case 'NI':
-        case 'NORTHERN IRELAND':
-            $country = 'NI';
-            break;
-
-        case 'WA':
-        case 'WALES':
-            $country = 'WA';
-            break;
-
-        default:
-            $country = 'EW';
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | REGISTERED OFFICE COUNTRY (ISO CODE REQUIRED)
-    |--------------------------------------------------------------------------
-    */
-
-    $raw_address_country = strtoupper(trim($formation->step2_addr_country ?? ''));
-
-    switch ($raw_address_country) {
-        case 'UNITED KINGDOM':
-        case 'UK':
-        case 'ENGLAND':
-            $address_country = 'GB-ENG';
-            break;
-
-        case 'SCOTLAND':
-            $address_country = 'GB-SCT';
-            break;
-
-        case 'WALES':
-            $address_country = 'GB-WLS';
-            break;
-
-        case 'NORTHERN IRELAND':
-            $address_country = 'GB-NIR';
-            break;
-
-        default:
-            $address_country = 'GB-ENG';
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | START XML
-    |--------------------------------------------------------------------------
-    */
-
-    $xml = '
-<CompanyIncorporation
+    // XML with exact schema sequence for Director
+    $xml = '<CompanyIncorporation
     xmlns="http://xmlgw.companieshouse.gov.uk"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="
-        http://xmlgw.companieshouse.gov.uk
-        http://xmlgw.companieshouse.gov.uk/v1-0/schema/forms/CompanyIncorporation-v3-8.xsd">
+    xsi:schemaLocation="http://xmlgw.companieshouse.gov.uk http://xmlgw.companieshouse.gov.uk/v1-0/schema/forms/CompanyIncorporation-v3-8.xsd">
 
     <CompanyType>' . esc_xml($company_type) . '</CompanyType>
-    <CountryOfIncorporation>' . esc_xml($country) . '</CountryOfIncorporation>
+
+    <CountryOfIncorporation>' . esc_xml($country_incorp) . '</CountryOfIncorporation>
 
     <RegisteredOfficeAddress>
-        <Premise>' . esc_xml($formation->step2_addr_line1 ?? '1') . '</Premise>
-        <PostTown>' . esc_xml($formation->step2_addr_line4 ?? 'London') . '</PostTown>
+        <Premise>' . esc_xml($premise) . '</Premise>
+        <PostTown>' . esc_xml($post_town) . '</PostTown>
         <Country>' . esc_xml($address_country) . '</Country>
-        <Postcode>' . esc_xml($formation->step2_addr_postcode ?? 'SW1A1AA') . '</Postcode>
+        <Postcode>' . esc_xml($postcode) . '</Postcode>
     </RegisteredOfficeAddress>
 
     <DataMemorandum>true</DataMemorandum>
+
     <Articles>BYSHRMODEL</Articles>
+
     <RestrictedArticles>false</RestrictedArticles>
 
-    <!-- REQUIRED: Appointment BEFORE StatementOfCapital -->
     <Appointment>
-    <ConsentToAct>true</ConsentToAct>
-    <Director>
-        <Person>
-
-            <Title>Mr</Title>
-            <Forename>John</Forename>
-            <OtherForenames>NA</OtherForenames>
-            <Surname>Doe</Surname>
+        <ConsentToAct>true</ConsentToAct>
+        <Director>
+            <Title>' . esc_xml($title) . '</Title>
+            <Forename>' . esc_xml($forename) . '</Forename>
+            <Surname>' . esc_xml($surname) . '</Surname>
 
             <ServiceAddress>
                 <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
             </ServiceAddress>
 
-            <DOB>1990-01-01</DOB>
-            <Nationality>British</Nationality>
-            <CountryOfResidence>United Kingdom</CountryOfResidence>
+            <DOB>' . esc_xml($dob) . '</DOB>
+
+            <Nationality>' . esc_xml($nationality) . '</Nationality>
+            <CountryOfResidence>' . esc_xml($country_res) . '</CountryOfResidence>
+
+            <PreviousNames>
+                <CONDate>1900-01-01</CONDate>
+                <CompanyName>None</CompanyName>
+            </PreviousNames>
 
             <ResidentialAddress>
-                <SameAsServiceAddress>true</SameAsServiceAddress>
+                <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
             </ResidentialAddress>
 
-            <VerificationDetails>
-                <CompaniesHousePersonalCode>12345678901</CompaniesHousePersonalCode>
-                <VerificationStatements>
-                    <VerificationStatementForIndividual>
-                        INDIVIDUAL_VERIFIED
-                    </VerificationStatementForIndividual>
-                </VerificationStatements>
-            </VerificationDetails>
+        </Director>
+    </Appointment>
 
-        </Person>
-    </Director>
-</Appointment>
+    <PSCs>
+        <NoPSCStatement>PSC01</NoPSCStatement>
+    </PSCs>
 
     <StatementOfCapital>
-    <Capital>
-        <TotalAmountUnpaid>0.00</TotalAmountUnpaid>
-        <TotalNumberOfIssuedShares>1</TotalNumberOfIssuedShares>
-        <ShareCurrency>GBP</ShareCurrency>
-        <TotalAggregateNominalValue>1.00</TotalAggregateNominalValue>
-        <Shares>
-            <ShareClass>ORDINARY</ShareClass>
-            <PrescribedParticulars>Each ordinary share carries one vote, the right to participate equally in dividends declared, and equal rights to any surplus assets on winding up.</PrescribedParticulars>
-            <NumShares>1</NumShares>
-            <AggregateNominalValue>1.00</AggregateNominalValue>
-        </Shares>
-    </Capital>
-</StatementOfCapital>
+        <Capital>
+            <TotalAmountUnpaid>0.00</TotalAmountUnpaid>
+            <TotalNumberOfIssuedShares>100</TotalNumberOfIssuedShares>
+            <ShareCurrency>GBP</ShareCurrency>
+            <TotalAggregateNominalValue>100.00</TotalAggregateNominalValue>
+            <Shares>
+                <ShareClass>Ordinary</ShareClass>
+                <PrescribedParticulars>Ordinary shares with full voting rights, equal dividend and capital distribution rights.</PrescribedParticulars>
+                <NumShares>100</NumShares>
+                <AggregateNominalValue>100.00</AggregateNominalValue>
+            </Shares>
+        </Capital>
+    </StatementOfCapital>
 
     <Subscribers>
         <Person>
-            <Forename>John</Forename>
-            <Surname>Doe</Surname>
+            <Forename>' . esc_xml($forename) . '</Forename>
+            <Surname>' . esc_xml($surname) . '</Surname>
         </Person>
-
         <Address>
-            <Premise>1</Premise>
-            <PostTown>London</PostTown>
+            <Premise>' . esc_xml($premise) . '</Premise>
+            <PostTown>' . esc_xml($post_town) . '</PostTown>
             <Country>' . esc_xml($address_country) . '</Country>
-            <Postcode>SW1A1AA</Postcode>
+            <Postcode>' . esc_xml($postcode) . '</Postcode>
         </Address>
-
         <Authentication>
-            <MemorandumPersonalAuthentication>
-                SUBSCRIBER_AGREES_NAME_USED_TO_AUTHENTICATE
-            </MemorandumPersonalAuthentication>
+            <SubscriberAuthentication>SUBSCRIBER_AGREES_NAME_USED_TO_AUTHENTICATE</SubscriberAuthentication>
         </Authentication>
-
         <Shares>
-            <ShareClass>ORDINARY</ShareClass>
-            <NumShares>1</NumShares>
+            <ShareClass>Ordinary</ShareClass>
+            <NumShares>100</NumShares>
             <AmountPaidDuePerShare>1.00</AmountPaidDuePerShare>
             <AmountUnpaidPerShare>0.00</AmountUnpaidPerShare>
             <ShareCurrency>GBP</ShareCurrency>
             <ShareValue>1.00</ShareValue>
         </Shares>
-
         <MemorandumStatement>Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.</MemorandumStatement>
     </Subscribers>
 
-
+    <Authoriser>
+        <Subscribers>
+            <Subscriber>
+                <Person>
+                    <Forename>' . esc_xml($forename) . '</Forename>
+                    <Surname>' . esc_xml($surname) . '</Surname>
+                </Person>
+                <Authentication>
+                    <SubscriberAuthentication>SUBSCRIBER_AGREES_NAME_USED_TO_AUTHENTICATE</SubscriberAuthentication>
+                </Authentication>
+            </Subscriber>
+        </Subscribers>
+    </Authoriser>
 
     <SameDay>false</SameDay>
 
     <SICCodes>
-        <SICCode>62020</SICCode>
+        <SICCode>' . esc_xml($sic_code) . '</SICCode>
     </SICCodes>
 
-    <RegisteredEmailAddress>test@testcompany.com</RegisteredEmailAddress>
+    <RegisteredEmailAddress>' . esc_xml($reg_email) . '</RegisteredEmailAddress>
 
-    <!-- REQUIRED FINAL ELEMENT -->
     <AcceptLawfulPurposeStatement>true</AcceptLawfulPurposeStatement>
 
 </CompanyIncorporation>';
