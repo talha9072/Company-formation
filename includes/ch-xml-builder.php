@@ -76,32 +76,42 @@ function ch_generate_in01_xml($token) {
     <RestrictedArticles>false</RestrictedArticles>
 
     <Appointment>
-        <ConsentToAct>true</ConsentToAct>
-        <Director>
+    <ConsentToAct>true</ConsentToAct>
+
+    <Director>
+
+        <Person>
             <Title>' . esc_xml($title) . '</Title>
             <Forename>' . esc_xml($forename) . '</Forename>
+            <OtherForenames>NA</OtherForenames>
             <Surname>' . esc_xml($surname) . '</Surname>
+        </Person>
 
-            <ServiceAddress>
-                <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
-            </ServiceAddress>
+        <ServiceAddressDetails>
+            <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
+        </ServiceAddressDetails>
 
-            <DOB>' . esc_xml($dob) . '</DOB>
+        <DOB>' . esc_xml($dob) . '</DOB>
 
-            <Nationality>' . esc_xml($nationality) . '</Nationality>
-            <CountryOfResidence>' . esc_xml($country_res) . '</CountryOfResidence>
+        <Nationality>' . esc_xml($nationality) . '</Nationality>
+        <CountryOfResidence>' . esc_xml($country_res) . '</CountryOfResidence>
 
-            <PreviousNames>
-                <CONDate>1900-01-01</CONDate>
-                <CompanyName>None</CompanyName>
-            </PreviousNames>
+        <Occupation>Software Engineer</Occupation>
 
-            <ResidentialAddress>
-                <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
-            </ResidentialAddress>
+        <PreviousNames>
+            <HasPreviousName>false</HasPreviousName>
+        </PreviousNames>
 
-        </Director>
-    </Appointment>
+        <ResidentialAddressDetails>
+            <SameAsServiceAddress>true</SameAsServiceAddress>
+        </ResidentialAddressDetails>
+
+        <VerificationDetails>
+            <PersonalAttribute>None</PersonalAttribute>
+        </VerificationDetails>
+
+    </Director>
+</Appointment>
 
     <PSCs>
         <NoPSCStatement>PSC01</NoPSCStatement>
