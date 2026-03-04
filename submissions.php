@@ -11,6 +11,7 @@ global $wpdb;
 |------------------------------------------------------------------
 */
 $environment = get_option('ch_environment', 'test');
+$package_reference = ($environment === 'test') ? '0012' : $transaction_id;
 
 $presenter_id = trim(($environment === 'live')
     ? get_option('ch_presenter_id_live')
@@ -70,29 +71,37 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
 
         /*
         |------------------------------------------------------------------
-        | GENERATE IDS & AUTH
+        | GENERATE IDS & AUTH – FIXED per Companies House support
         |------------------------------------------------------------------
         */
         $transaction_id    = time() . rand(1000, 9999);
         $submission_number = 'INC' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
 
-        // Correct CHMD5 authentication
-        $sender_id  = $presenter_id;  // Raw, no hash, no case change
-        $auth_value = md5($presenter_id . $password);
+        // FIXED AUTHENTICATION (most common working combination after support feedback)
+        $sender_id_raw  = $presenter_id;
+        $password_raw   = $password;
 
-        // Temporary debug (remove after successful test)
-        echo '<div style="background:#fff3cd; padding:15px; border:1px solid #ffeeba; margin:20px 0;">';
-        echo '<strong>Debug Info (remove this block later):</strong><br>';
-        echo 'Environment: ' . esc_html($environment) . '<br>';
-        echo 'Presenter ID (raw): ' . esc_html($presenter_id) . '<br>';
-        echo 'Auth Code (raw): ' . esc_html($password) . '<br>';
-        echo 'SenderID (sent raw): ' . esc_html($sender_id) . '<br>';
-        echo 'AuthValue (CHMD5 hash): ' . esc_html($auth_value) . '<br>';
-        echo '</div>';
+        $sender_id  = md5($sender_id_raw);           // SenderID = MD5(presenter_id)
+        $auth_value = md5($password_raw);            // Value = MD5(password / auth code)
+
+        // ──────────────────────────────────────────────────────────────
+        // Optional: show debug info (comment out or remove in production)
+        $show_debug = true; // ← set to false when you're done testing
+        if ($show_debug) {
+            echo '<div style="background:#fff3cd; padding:15px; border:1px solid #ffeeba; margin:20px 0;">';
+            echo '<strong>Auth Debug (remove/comment when working):</strong><br>';
+            echo 'Environment: ' . esc_html($environment) . '<br>';
+            echo 'Raw Presenter ID: ' . esc_html($presenter_id) . '<br>';
+            echo 'Raw Auth Code: ' . esc_html(substr($password, 0, 4)) . "...<br>";
+            echo 'SenderID (MD5): ' . esc_html($sender_id) . '<br>';
+            echo 'AuthValue (MD5 of password): ' . esc_html($auth_value) . '<br>';
+            echo '</div>';
+        }
+        // ──────────────────────────────────────────────────────────────
 
         /*
         |------------------------------------------------------------------
-        | BUILD FULL GOVTALK XML
+        | BUILD FULL GOVTALK XML – with corrected authentication
         |------------------------------------------------------------------
         */
         $full_xml = '<?xml version="1.0" encoding="UTF-8"?>
@@ -111,7 +120,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
             <IDAuthentication>
                 <SenderID>' . esc_xml($sender_id) . '</SenderID>
                 <Authentication>
-                    <Method>CHMD5</Method>
+                    <Method>clear</Method>
                     <Value>' . esc_xml($auth_value) . '</Value>
                 </Authentication>
             </IDAuthentication>
@@ -129,7 +138,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
 
             <FormHeader>
                 <CompanyName>' . esc_xml($company_name) . '</CompanyName>
-                <PackageReference>' . esc_xml($transaction_id) . '</PackageReference>
+                <PackageReference>' . esc_xml($package_reference) . '</PackageReference>
                 <FormIdentifier>CompanyIncorporation</FormIdentifier>
                 <SubmissionNumber>' . esc_xml($submission_number) . '</SubmissionNumber>
                 <ContactName>System</ContactName>
@@ -148,7 +157,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
 
         /*
         |------------------------------------------------------------------
-        | DEBUG OUTPUT
+        | DEBUG OUTPUT – XML being sent
         |------------------------------------------------------------------
         */
         echo '<h2>📤 XML Sent</h2>';

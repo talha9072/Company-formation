@@ -33,22 +33,6 @@ function ch_generate_in01_xml($token) {
     $country_incorp   = 'EW';
 
     $xml = '
-<FormSubmission xmlns="http://xmlgw.companieshouse.gov.uk/Header"
-    xmlns:bs="http://xmlgw.companieshouse.gov.uk"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlgw.companieshouse.gov.uk/Header http://xmlgw.companieshouse.gov.uk/v1-0/schema/forms/FormSubmission-v2-11.xsd">
-
-    <FormHeader>
-        <CompanyName>' . esc_xml($company_name) . '</CompanyName>
-        <PackageReference>' . esc_xml($package_ref) . '</PackageReference>
-        <FormIdentifier>CompanyIncorporation</FormIdentifier>
-        <SubmissionNumber>' . esc_xml($submission_num) . '</SubmissionNumber>
-    </FormHeader>
-
-    <DateSigned>' . esc_xml($date_signed) . '</DateSigned>
-
-    <Form>
-
         <CompanyIncorporation xmlns="http://xmlgw.companieshouse.gov.uk"
             xsi:schemaLocation="http://xmlgw.companieshouse.gov.uk http://xmlgw.companieshouse.gov.uk/v1-0/schema/forms/CompanyIncorporation-v3-8.xsd">
 
@@ -89,7 +73,7 @@ function ch_generate_in01_xml($token) {
                             </Address>
                         </ResidentialAddress>
                         <VerificationDetails>
-                            <CompaniesHousePersonalCode>12345678901</CompaniesHousePersonalCode>
+                            <CompaniesHousePersonalCode>CWMPS832223</CompaniesHousePersonalCode>
                             <VerificationStatements>
                                 <VerificationStatementForIndividual>INDIVIDUAL_VERIFIED</VerificationStatementForIndividual>
                             </VerificationStatements>
@@ -184,7 +168,7 @@ function ch_generate_in01_xml($token) {
                                 </Address>
                             </ResidentialAddress>
                             <VerificationDetails>
-                                <CompaniesHousePersonalCode>12345678901</CompaniesHousePersonalCode>
+                                <CompaniesHousePersonalCode>CWMPS832223</CompaniesHousePersonalCode>
                                 <VerificationStatements>
                                     <VerificationStatementForIndividual>INDIVIDUAL_VERIFIED</VerificationStatementForIndividual>
                                 </VerificationStatements>
@@ -318,11 +302,7 @@ function ch_generate_in01_xml($token) {
             <RegisteredEmailAddress>test@test.com</RegisteredEmailAddress>
             <AcceptLawfulPurposeStatement>true</AcceptLawfulPurposeStatement>
 
-        </CompanyIncorporation>
-
-    </Form>
-
-</FormSubmission>';
+        </CompanyIncorporation>';
 
     return $xml;
 }
