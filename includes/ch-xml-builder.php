@@ -26,7 +26,7 @@ function ch_generate_in01_xml($token) {
     // Use example values exactly — for testing
     $company_name     = 'JOHN SMITH EXAMPLE LIMITED';
     $package_ref      = '9999';
-    $submission_num   = 'INCb05';
+    $submission_num   = 'INCb07';
     $date_signed      = '2019-11-01'; // You can change to date('Y-m-d') later
 
     $company_type     = 'BYSHR';

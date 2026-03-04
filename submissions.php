@@ -70,23 +70,24 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
 
         /*
         |------------------------------------------------------------------
-        | GENERATE IDS
+        | GENERATE IDS & AUTH
         |------------------------------------------------------------------
         */
         $transaction_id    = time() . rand(1000, 9999);
-        $submission_number = 'INC' . str_pad(rand(1,999),3,'0',STR_PAD_LEFT);
+        $submission_number = 'INC' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
 
-        $sender_id  = md5(strtolower($presenter_id));
-        $auth_value = md5(strtolower($password));
+        // Correct CHMD5 authentication
+        $sender_id  = $presenter_id;  // Raw, no hash, no case change
+        $auth_value = md5($presenter_id . $password);
 
-        // Temporary debug (remove after testing)
+        // Temporary debug (remove after successful test)
         echo '<div style="background:#fff3cd; padding:15px; border:1px solid #ffeeba; margin:20px 0;">';
         echo '<strong>Debug Info (remove this block later):</strong><br>';
         echo 'Environment: ' . esc_html($environment) . '<br>';
         echo 'Presenter ID (raw): ' . esc_html($presenter_id) . '<br>';
         echo 'Auth Code (raw): ' . esc_html($password) . '<br>';
-        echo 'MD5 SenderID: ' . esc_html($sender_id) . '<br>';
-        echo 'MD5 AuthValue: ' . esc_html($auth_value) . '<br>';
+        echo 'SenderID (sent raw): ' . esc_html($sender_id) . '<br>';
+        echo 'AuthValue (CHMD5 hash): ' . esc_html($auth_value) . '<br>';
         echo '</div>';
 
         /*
@@ -96,7 +97,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
         */
         $full_xml = '<?xml version="1.0" encoding="UTF-8"?>
 <GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
-    <EnvelopeVersion>2.0</EnvelopeVersion>
+    <EnvelopeVersion>1.0</EnvelopeVersion>
 
     <Header>
         <MessageDetails>
@@ -110,7 +111,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
             <IDAuthentication>
                 <SenderID>' . esc_xml($sender_id) . '</SenderID>
                 <Authentication>
-                    <Method>clear</Method>
+                    <Method>CHMD5</Method>
                     <Value>' . esc_xml($auth_value) . '</Value>
                 </Authentication>
             </IDAuthentication>
