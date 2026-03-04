@@ -5,7 +5,6 @@ if (!defined('ABSPATH')) {
 
 global $wpdb;
 
-
 /*
 |------------------------------------------------------------------
 | 1. ENVIRONMENT
@@ -74,12 +73,21 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
         | GENERATE IDS
         |------------------------------------------------------------------
         */
-        $transaction_id    = time() . rand(1000,9999);
-      $submission_number = 'INC' . str_pad(rand(1,999),3,'0',STR_PAD_LEFT);
+        $transaction_id    = time() . rand(1000, 9999);
+        $submission_number = 'INC' . str_pad(rand(1,999),3,'0',STR_PAD_LEFT);
+
         $sender_id  = md5(strtolower($presenter_id));
         $auth_value = md5(strtolower($password));
 
-        
+        // Temporary debug (remove after testing)
+        echo '<div style="background:#fff3cd; padding:15px; border:1px solid #ffeeba; margin:20px 0;">';
+        echo '<strong>Debug Info (remove this block later):</strong><br>';
+        echo 'Environment: ' . esc_html($environment) . '<br>';
+        echo 'Presenter ID (raw): ' . esc_html($presenter_id) . '<br>';
+        echo 'Auth Code (raw): ' . esc_html($password) . '<br>';
+        echo 'MD5 SenderID: ' . esc_html($sender_id) . '<br>';
+        echo 'MD5 AuthValue: ' . esc_html($auth_value) . '<br>';
+        echo '</div>';
 
         /*
         |------------------------------------------------------------------
@@ -149,7 +157,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
 
         /*
         |------------------------------------------------------------------
-        | SEND REQUEST (NO BASIC AUTH – correct for Companies House XML GW)
+        | SEND REQUEST
         |------------------------------------------------------------------
         */
         $response = wp_remote_post($gateway_url, [
@@ -161,12 +169,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
         ]);
 
         if (is_wp_error($response)) {
-
             echo '<div class="notice notice-error"><p>❌ Connection Error: '
                  . esc_html($response->get_error_message()) . '</p></div>';
-
         } else {
-
             $body = wp_remote_retrieve_body($response);
 
             echo '<h2>📥 Raw Response</h2>';
@@ -175,23 +180,18 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
             echo '</pre>';
 
             if (stripos($body, '<Status>ACCEPTED</Status>') !== false) {
-
                 $wpdb->update(
                     $saved_table,
                     ['status' => 'accepted'],
                     ['formation_token' => $token]
                 );
-
                 echo '<div class="notice notice-success"><p>✅ Submission Accepted!</p></div>';
-
             } else {
-
                 $wpdb->update(
                     $saved_table,
                     ['status' => 'rejected'],
                     ['formation_token' => $token]
                 );
-
                 echo '<div class="notice notice-error"><p>❌ Submission Rejected or errored.</p></div>';
 
                 if (preg_match('/<Text>(.*?)<\/Text>/s', $body, $matches)) {
