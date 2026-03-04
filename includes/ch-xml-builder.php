@@ -15,6 +15,7 @@ function ch_generate_in01_xml($token) {
 
     $formation_table = $wpdb->prefix . 'companyformation';
 
+    // Fetch stored data (for future dynamic use), but for exact test we override with example values
     $formation = $wpdb->get_row(
         $wpdb->prepare(
             "SELECT * FROM {$formation_table} WHERE token = %s LIMIT 1",
@@ -22,166 +23,306 @@ function ch_generate_in01_xml($token) {
         )
     );
 
-    if (!$formation) {
-        return false;
-    }
+    // Use example values exactly — for testing
+    $company_name     = 'JOHN SMITH EXAMPLE LIMITED';
+    $package_ref      = '9999';
+    $submission_num   = 'INCb05';
+    $date_signed      = '2019-11-01'; // You can change to date('Y-m-d') later
 
-    $data = maybe_unserialize($formation->data ?? '');
-
-    // Values
     $company_type     = 'BYSHR';
     $country_incorp   = 'EW';
 
-    $premise          = !empty($data['step2_addr_line1'])   ? $data['step2_addr_line1']   : '123 High Street';
-    $post_town        = !empty($data['step2_addr_line4'])   ? $data['step2_addr_line4']   : 'London';
-    $postcode         = !empty($data['step2_addr_postcode']) ? strtoupper(str_replace(' ', '', $data['step2_addr_postcode'])) : 'EC1A1BB';
-    $address_country  = 'GB-ENG';
-
-    $title            = 'Mr';
-    $forename         = !empty($data['director_forename']) ? $data['director_forename'] : 'Thomas';
-    $surname          = !empty($data['director_surname'])  ? $data['director_surname']  : 'Anderson';
-
-    $dob_year         = !empty($data['director_dob_year'])  ? $data['director_dob_year']  : '1988';
-    $dob_month        = !empty($data['director_dob_month']) ? str_pad($data['director_dob_month'], 2, '0', STR_PAD_LEFT) : '08';
-    $dob_day          = !empty($data['director_dob_day'])   ? str_pad($data['director_dob_day'],   2, '0', STR_PAD_LEFT) : '15';
-    $dob              = "{$dob_year}-{$dob_month}-{$dob_day}";
-
-    $nationality      = 'British';
-    $country_res      = 'United Kingdom';
-
-    $sic_code         = '62020';
-    $reg_email        = 'thomas.anderson@exampleltd.co.uk';
-
-    // XML with exact schema sequence for Director
-    $xml = '<CompanyIncorporation
-    xmlns="http://xmlgw.companieshouse.gov.uk"
+    $xml = '
+<FormSubmission xmlns="http://xmlgw.companieshouse.gov.uk/Header"
+    xmlns:bs="http://xmlgw.companieshouse.gov.uk"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://xmlgw.companieshouse.gov.uk http://xmlgw.companieshouse.gov.uk/v1-0/schema/forms/CompanyIncorporation-v3-8.xsd">
+    xsi:schemaLocation="http://xmlgw.companieshouse.gov.uk/Header http://xmlgw.companieshouse.gov.uk/v1-0/schema/forms/FormSubmission-v2-11.xsd">
 
-    <CompanyType>' . esc_xml($company_type) . '</CompanyType>
+    <FormHeader>
+        <CompanyName>' . esc_xml($company_name) . '</CompanyName>
+        <PackageReference>' . esc_xml($package_ref) . '</PackageReference>
+        <FormIdentifier>CompanyIncorporation</FormIdentifier>
+        <SubmissionNumber>' . esc_xml($submission_num) . '</SubmissionNumber>
+    </FormHeader>
 
-    <CountryOfIncorporation>' . esc_xml($country_incorp) . '</CountryOfIncorporation>
+    <DateSigned>' . esc_xml($date_signed) . '</DateSigned>
 
-    <RegisteredOfficeAddress>
-        <Premise>' . esc_xml($premise) . '</Premise>
-        <PostTown>' . esc_xml($post_town) . '</PostTown>
-        <Country>' . esc_xml($address_country) . '</Country>
-        <Postcode>' . esc_xml($postcode) . '</Postcode>
-    </RegisteredOfficeAddress>
+    <Form>
 
-    <DataMemorandum>true</DataMemorandum>
+        <CompanyIncorporation xmlns="http://xmlgw.companieshouse.gov.uk"
+            xsi:schemaLocation="http://xmlgw.companieshouse.gov.uk http://xmlgw.companieshouse.gov.uk/v1-0/schema/forms/CompanyIncorporation-v3-8.xsd">
 
-    <Articles>BYSHRMODEL</Articles>
+            <CompanyType>' . esc_xml($company_type) . '</CompanyType>
+            <CountryOfIncorporation>' . esc_xml($country_incorp) . '</CountryOfIncorporation>
 
-    <RestrictedArticles>false</RestrictedArticles>
+            <RegisteredOfficeAddress>
+                <Premise>1</Premise>
+                <Street>Any Road</Street>
+                <Thoroughfare>Area</Thoroughfare>
+                <PostTown>Anytown</PostTown>
+                <Country>GBR</Country>
+                <Postcode>ZB2 2ZZ</Postcode>
+            </RegisteredOfficeAddress>
 
-    <Appointment>
-    <ConsentToAct>true</ConsentToAct>
+            <DataMemorandum>true</DataMemorandum>
+            <Articles>BYSHRMODEL</Articles>
 
-    <Director>
+            <Appointment>
+                <ConsentToAct>true</ConsentToAct>
+                <Director>
+                    <Person>
+                        <Forename>Fred</Forename>
+                        <Surname>Jones</Surname>
+                        <ServiceAddress>
+                            <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
+                        </ServiceAddress>
+                        <DOB>1992-01-01</DOB>
+                        <Nationality>British</Nationality>
+                        <CountryOfResidence>WALES</CountryOfResidence>
+                        <ResidentialAddress>
+                            <Address>
+                                <Premise>1</Premise>
+                                <Street>High Street</Street>
+                                <PostTown>Anywhere</PostTown>
+                                <Country>GB-WLS</Country>
+                                <Postcode>QP1 1XY</Postcode>
+                            </Address>
+                        </ResidentialAddress>
+                        <VerificationDetails>
+                            <CompaniesHousePersonalCode>12345678901</CompaniesHousePersonalCode>
+                            <VerificationStatements>
+                                <VerificationStatementForIndividual>INDIVIDUAL_VERIFIED</VerificationStatementForIndividual>
+                            </VerificationStatements>
+                            <NameMismatchReason>LEGALLY_CHANGED</NameMismatchReason>
+                        </VerificationDetails>
+                    </Person>
+                </Director>
+            </Appointment>
 
-        <Person>
-            <Title>' . esc_xml($title) . '</Title>
-            <Forename>' . esc_xml($forename) . '</Forename>
-            <OtherForenames>NA</OtherForenames>
-            <Surname>' . esc_xml($surname) . '</Surname>
-        </Person>
+            <Appointment>
+                <ConsentToAct>true</ConsentToAct>
+                <Director>
+                    <Corporate>
+                        <CorporateName>A UK Company Ltd</CorporateName>
+                        <Address>
+                            <Premise>1</Premise>
+                            <Street>High Street</Street>
+                            <PostTown>Anywhere</PostTown>
+                            <Country>GB-WLS</Country>
+                            <Postcode>QP1 1XY</Postcode>
+                        </Address>
+                        <CompanyIdentification>
+                            <UK>
+                                <RegistrationNumber>12345678</RegistrationNumber>
+                            </UK>
+                        </CompanyIdentification>
+                    </Corporate>
+                </Director>
+            </Appointment>
 
-        <ServiceAddressDetails>
-            <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
-        </ServiceAddressDetails>
+            <Appointment>
+                <ConsentToAct>true</ConsentToAct>
+                <Director>
+                    <Corporate>
+                        <CorporateName>A Non UK Company Ltd</CorporateName>
+                        <Address>
+                            <Premise>2</Premise>
+                            <Street>A Street In Belgium</Street>
+                            <PostTown>Anywhere</PostTown>
+                            <Country>BEL</Country>
+                            <Postcode>9999</Postcode>
+                        </Address>
+                        <CompanyIdentification>
+                            <NonUK>
+                                <PlaceRegistered>Belgium</PlaceRegistered>
+                                <RegistrationNumber>12345678</RegistrationNumber>
+                                <LawGoverned>Belgium</LawGoverned>
+                                <LegalForm>Belgium Limited Liability Company</LegalForm>
+                            </NonUK>
+                        </CompanyIdentification>
+                    </Corporate>
+                </Director>
+            </Appointment>
 
-        <DOB>' . esc_xml($dob) . '</DOB>
+            <Appointment>
+                <ConsentToAct>true</ConsentToAct>
+                <Secretary>
+                    <Person>
+                        <Forename>Harry</Forename>
+                        <Surname>Smith</Surname>
+                        <ServiceAddress>
+                            <Address>
+                                <Premise>1</Premise>
+                                <Street>No Street</Street>
+                                <PostTown>Nowhere</PostTown>
+                                <Country>CAN</Country>
+                            </Address>
+                        </ServiceAddress>
+                    </Person>
+                </Secretary>
+            </Appointment>
 
-        <Nationality>' . esc_xml($nationality) . '</Nationality>
-        <CountryOfResidence>' . esc_xml($country_res) . '</CountryOfResidence>
+            <PSCs>
+                <PSC>
+                    <PSCNotification>
+                        <Individual>
+                            <Forename>John</Forename>
+                            <Surname>Smith</Surname>
+                            <ServiceAddress>
+                                <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
+                            </ServiceAddress>
+                            <DOB>1900-01-01</DOB>
+                            <Nationality>British</Nationality>
+                            <CountryOfResidence>United Kingdom</CountryOfResidence>
+                            <ResidentialAddress>
+                                <Address>
+                                    <Premise>742</Premise>
+                                    <Street>Long Street</Street>
+                                    <PostTown>Someplace</PostTown>
+                                    <Country>GB-WLS</Country>
+                                    <Postcode>QP12 0NN</Postcode>
+                                </Address>
+                            </ResidentialAddress>
+                            <VerificationDetails>
+                                <CompaniesHousePersonalCode>12345678901</CompaniesHousePersonalCode>
+                                <VerificationStatements>
+                                    <VerificationStatementForIndividual>INDIVIDUAL_VERIFIED</VerificationStatementForIndividual>
+                                </VerificationStatements>
+                                <NameMismatchReason>LEGALLY_CHANGED</NameMismatchReason>
+                            </VerificationDetails>
+                            <ConsentStatement>true</ConsentStatement>
+                        </Individual>
+                        <NatureOfControls>
+                            <NatureOfControl>OWNERSHIPOFSHARES_25TO50PERCENT</NatureOfControl>
+                        </NatureOfControls>
+                    </PSCNotification>
+                </PSC>
+                <PSC>
+                    <PSCNotification>
+                        <Individual>
+                            <Forename>Jane</Forename>
+                            <Surname>Smith</Surname>
+                            <ServiceAddress>
+                                <SameAsRegisteredOffice>true</SameAsRegisteredOffice>
+                            </ServiceAddress>
+                            <DOB>1985-01-02</DOB>
+                            <Nationality>British</Nationality>
+                            <CountryOfResidence>United Kingdom</CountryOfResidence>
+                            <ResidentialAddress>
+                                <Address>
+                                    <Premise>744</Premise>
+                                    <Street>Long Street</Street>
+                                    <PostTown>Someplace</PostTown>
+                                    <Country>GB-ENG</Country>
+                                    <Postcode>QP12 0NN</Postcode>
+                                </Address>
+                            </ResidentialAddress>
+                            <ConsentStatement>true</ConsentStatement>
+                        </Individual>
+                        <NatureOfControls>
+                            <NatureOfControl>OWNERSHIPOFSHARES_50TO75PERCENT</NatureOfControl>
+                        </NatureOfControls>
+                    </PSCNotification>
+                </PSC>
+                <PSC>
+                    <PSCNotification>
+                        <Corporate>
+                            <CorporateName>BIG OLD COMPANY LIMITED</CorporateName>
+                            <Address>
+                                <Premise>11</Premise>
+                                <PostTown>Cardiff</PostTown>
+                                <Country>GB-WLS</Country>
+                            </Address>
+                            <PSCCompanyIdentification>
+                                <PSCPlaceRegistered>London</PSCPlaceRegistered>
+                                <PSCRegistrationNumber>12345678</PSCRegistrationNumber>
+                                <LawGoverned>BigOldLaw</LawGoverned>
+                                <LegalForm>BigOldForm</LegalForm>
+                                <CountryOrState>England</CountryOrState>
+                            </PSCCompanyIdentification>
+                        </Corporate>
+                        <NatureOfControls>
+                            <NatureOfControl>OWNERSHIPOFSHARES_25TO50PERCENT</NatureOfControl>
+                        </NatureOfControls>
+                    </PSCNotification>
+                </PSC>
+            </PSCs>
 
-        <Occupation>Software Engineer</Occupation>
+            <StatementOfCapital>
+                <Capital>
+                    <TotalAmountUnpaid>10</TotalAmountUnpaid>
+                    <TotalNumberOfIssuedShares>100</TotalNumberOfIssuedShares>
+                    <ShareCurrency>GBP</ShareCurrency>
+                    <TotalAggregateNominalValue>100</TotalAggregateNominalValue>
+                    <Shares>
+                        <ShareClass>Ordinary</ShareClass>
+                        <PrescribedParticulars>None</PrescribedParticulars>
+                        <NumShares>100</NumShares>
+                        <AggregateNominalValue>100</AggregateNominalValue>
+                    </Shares>
+                </Capital>
+            </StatementOfCapital>
 
-        <PreviousNames>
-            <HasPreviousName>false</HasPreviousName>
-        </PreviousNames>
-
-        <ResidentialAddressDetails>
-            <SameAsServiceAddress>true</SameAsServiceAddress>
-        </ResidentialAddressDetails>
-
-        <VerificationDetails>
-            <PersonalAttribute>None</PersonalAttribute>
-        </VerificationDetails>
-
-    </Director>
-</Appointment>
-
-    <PSCs>
-        <NoPSCStatement>PSC01</NoPSCStatement>
-    </PSCs>
-
-    <StatementOfCapital>
-        <Capital>
-            <TotalAmountUnpaid>0.00</TotalAmountUnpaid>
-            <TotalNumberOfIssuedShares>100</TotalNumberOfIssuedShares>
-            <ShareCurrency>GBP</ShareCurrency>
-            <TotalAggregateNominalValue>100.00</TotalAggregateNominalValue>
-            <Shares>
-                <ShareClass>Ordinary</ShareClass>
-                <PrescribedParticulars>Ordinary shares with full voting rights, equal dividend and capital distribution rights.</PrescribedParticulars>
-                <NumShares>100</NumShares>
-                <AggregateNominalValue>100.00</AggregateNominalValue>
-            </Shares>
-        </Capital>
-    </StatementOfCapital>
-
-    <Subscribers>
-        <Person>
-            <Forename>' . esc_xml($forename) . '</Forename>
-            <Surname>' . esc_xml($surname) . '</Surname>
-        </Person>
-        <Address>
-            <Premise>' . esc_xml($premise) . '</Premise>
-            <PostTown>' . esc_xml($post_town) . '</PostTown>
-            <Country>' . esc_xml($address_country) . '</Country>
-            <Postcode>' . esc_xml($postcode) . '</Postcode>
-        </Address>
-        <Authentication>
-            <SubscriberAuthentication>SUBSCRIBER_AGREES_NAME_USED_TO_AUTHENTICATE</SubscriberAuthentication>
-        </Authentication>
-        <Shares>
-            <ShareClass>Ordinary</ShareClass>
-            <NumShares>100</NumShares>
-            <AmountPaidDuePerShare>1.00</AmountPaidDuePerShare>
-            <AmountUnpaidPerShare>0.00</AmountUnpaidPerShare>
-            <ShareCurrency>GBP</ShareCurrency>
-            <ShareValue>1.00</ShareValue>
-        </Shares>
-        <MemorandumStatement>Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.</MemorandumStatement>
-    </Subscribers>
-
-    <Authoriser>
-        <Subscribers>
-            <Subscriber>
+            <Subscribers>
                 <Person>
-                    <Forename>' . esc_xml($forename) . '</Forename>
-                    <Surname>' . esc_xml($surname) . '</Surname>
+                    <Forename>Fred</Forename>
+                    <Surname>Jones</Surname>
                 </Person>
+                <Address>
+                    <Premise>1</Premise>
+                    <Street>Fred Street</Street>
+                    <PostTown>Fred Town</PostTown>
+                    <Country>GBR</Country>
+                    <Postcode>QP12 0NN</Postcode>
+                </Address>
                 <Authentication>
-                    <SubscriberAuthentication>SUBSCRIBER_AGREES_NAME_USED_TO_AUTHENTICATE</SubscriberAuthentication>
+                    <MemorandumPersonalAuthentication>SUBSCRIBER_AGREES_NAME_USED_TO_AUTHENTICATE</MemorandumPersonalAuthentication>
                 </Authentication>
-            </Subscriber>
-        </Subscribers>
-    </Authoriser>
+                <Shares>
+                    <ShareClass>Ordinary</ShareClass>
+                    <NumShares>100</NumShares>
+                    <AmountPaidDuePerShare>0.99</AmountPaidDuePerShare>
+                    <AmountUnpaidPerShare>0.01</AmountUnpaidPerShare>
+                    <ShareCurrency>GBP</ShareCurrency>
+                    <ShareValue>1</ShareValue>
+                </Shares>
+                <MemorandumStatement>Each subscriber to this memorandum of association wishes to form a company under the Companies Act 2006 and agrees to become a member of the company and to take at least one share.</MemorandumStatement>
+            </Subscribers>
 
-    <SameDay>false</SameDay>
+            <Authoriser>
+                <Agent>
+                    <Corporate>
+                        <Forename>Fred</Forename>
+                        <Surname>Jones</Surname>
+                        <CorporateName>Jones and Co</CorporateName>
+                    </Corporate>
+                    <Authentication>
+                        <AuthoriserPersonalAuthentication>AUTHORISER_AGREES_NAME_USED_TO_AUTHENTICATE</AuthoriserPersonalAuthentication>
+                    </Authentication>
+                    <Address>
+                        <Premise>1</Premise>
+                        <Street>MOO STREET</Street>
+                        <PostTown>Cardiff</PostTown>
+                        <Country>GB-WLS</Country>
+                    </Address>
+                </Agent>
+            </Authoriser>
 
-    <SICCodes>
-        <SICCode>' . esc_xml($sic_code) . '</SICCode>
-    </SICCodes>
+            <SameDay>false</SameDay>
+            <RejectReference>XYZ12345</RejectReference>
 
-    <RegisteredEmailAddress>' . esc_xml($reg_email) . '</RegisteredEmailAddress>
+            <SICCodes>
+                <SICCode>71129</SICCode>
+            </SICCodes>
 
-    <AcceptLawfulPurposeStatement>true</AcceptLawfulPurposeStatement>
+            <RegisteredEmailAddress>test@test.com</RegisteredEmailAddress>
+            <AcceptLawfulPurposeStatement>true</AcceptLawfulPurposeStatement>
 
-</CompanyIncorporation>';
+        </CompanyIncorporation>
+
+    </Form>
+
+</FormSubmission>';
 
     return $xml;
 }

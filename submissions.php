@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
 
 global $wpdb;
 
+
 /*
 |------------------------------------------------------------------
 | 1. ENVIRONMENT
@@ -49,7 +50,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
 
         /*
         |------------------------------------------------------------------
-        | FETCH COMPANY NAME
+        | FETCH COMPANY NAME (for display/debug)
         |------------------------------------------------------------------
         */
         $formation = $wpdb->get_row(
@@ -59,7 +60,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
             )
         );
 
-        $company_name = 'TEST COMPANY ' . time() . ' LTD';
+        $company_name = 'TEST COMPANY ' . date('YmdHis') . ' LTD';
 
         if ($formation) {
             $data = maybe_unserialize($formation->data ?? '');
@@ -73,11 +74,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
         | GENERATE IDS
         |------------------------------------------------------------------
         */
-        $transaction_id   = time() . rand(1000,9999);
-        $submission_number = str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
-
+        $transaction_id    = time() . rand(1000,9999);
+      $submission_number = 'INC' . str_pad(rand(1,999),3,'0',STR_PAD_LEFT);
         $sender_id  = md5(strtolower($presenter_id));
         $auth_value = md5(strtolower($password));
+
+        
 
         /*
         |------------------------------------------------------------------
@@ -93,6 +95,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
             <Class>CompanyIncorporation</Class>
             <Qualifier>request</Qualifier>
             <TransactionID>' . esc_xml($transaction_id) . '</TransactionID>
+            <GatewayTest>1</GatewayTest>
         </MessageDetails>
 
         <SenderDetails>
@@ -103,7 +106,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
                     <Value>' . esc_xml($auth_value) . '</Value>
                 </Authentication>
             </IDAuthentication>
-            <EmailAddress>system@test.com</EmailAddress>
+            <EmailAddress>stein.johnsen@westmoore-services.com</EmailAddress>
         </SenderDetails>
     </Header>
 
@@ -140,13 +143,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
         |------------------------------------------------------------------
         */
         echo '<h2>📤 XML Sent</h2>';
-        echo '<pre style="background:#fff;padding:15px;border:1px solid #ccc;max-height:400px;overflow:auto;">';
+        echo '<pre style="background:#fff;padding:15px;border:1px solid #ccc;max-height:500px;overflow:auto; font-size:13px;">';
         echo esc_html($full_xml);
         echo '</pre>';
 
         /*
         |------------------------------------------------------------------
-        | SEND REQUEST (NO BASIC AUTH)
+        | SEND REQUEST (NO BASIC AUTH – correct for Companies House XML GW)
         |------------------------------------------------------------------
         */
         $response = wp_remote_post($gateway_url, [
@@ -154,7 +157,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
                 'Content-Type' => 'text/xml; charset=utf-8'
             ],
             'body'    => $full_xml,
-            'timeout' => 60
+            'timeout' => 90
         ]);
 
         if (is_wp_error($response)) {
@@ -167,7 +170,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
             $body = wp_remote_retrieve_body($response);
 
             echo '<h2>📥 Raw Response</h2>';
-            echo '<pre style="background:#fff;padding:15px;border:1px solid #ccc;max-height:400px;overflow:auto;">';
+            echo '<pre style="background:#fff;padding:15px;border:1px solid #ccc;max-height:500px;overflow:auto; font-size:13px;">';
             echo esc_html($body);
             echo '</pre>';
 
@@ -189,12 +192,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'submit' && !empty($_GET['toke
                     ['formation_token' => $token]
                 );
 
-                echo '<div class="notice notice-error"><p>❌ Submission Rejected.</p></div>';
+                echo '<div class="notice notice-error"><p>❌ Submission Rejected or errored.</p></div>';
 
-                if (preg_match('/<Text>(.*?)<\/Text>/', $body, $matches)) {
-                    echo '<h3>Rejection Reason:</h3>';
+                if (preg_match('/<Text>(.*?)<\/Text>/s', $body, $matches)) {
+                    echo '<h3>Rejection / Error Reason:</h3>';
                     echo '<pre style="background:#fff;padding:10px;border:1px solid #ccc;">'
-                        . esc_html($matches[1]) .
+                        . esc_html(trim($matches[1])) .
                         '</pre>';
                 }
             }
@@ -248,7 +251,7 @@ $submissions = $wpdb->get_results("
                     }
                 }
 
-                $status = $submission->status ?? 'unknown';
+                $status = strtolower($submission->status ?? 'unknown');
             ?>
                 <tr>
                     <td><?php echo esc_html($submission->id); ?></td>
@@ -263,10 +266,12 @@ $submissions = $wpdb->get_results("
 
                         <?php elseif ($status === 'rejected') : ?>
                             <a href="?page=namecheck-uk-submissions&action=submit&token=<?php echo esc_attr($submission->formation_token); ?>"
-                               class="button button-primary">Submit Again</a>
+                               class="button button-primary">Resubmit</a>
 
                         <?php elseif ($status === 'accepted') : ?>
                             <span style="color:green;font-weight:bold;">Accepted</span>
+                        <?php else : ?>
+                            <span style="color:orange;">Unknown</span>
                         <?php endif; ?>
 
                     </td>
